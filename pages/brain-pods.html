@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Brain pods · 子系统导航</title>
+    <link rel="stylesheet" href="../assets/css/styles.css" />
+    <style>
+      .pods-page {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 28px 16px 36px;
+      }
+
+      .pods-intro {
+        border: 1px solid rgba(148, 163, 184, 0.3);
+        border-radius: 18px;
+        padding: 18px;
+        background: radial-gradient(circle at top left, rgba(56, 189, 248, 0.16), transparent 55%),
+          radial-gradient(circle at 90% 20%, rgba(34, 197, 94, 0.16), transparent 56%), rgba(15, 23, 42, 0.82);
+        margin-bottom: 16px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(380px, 500px);
+        gap: 18px;
+        align-items: center;
+      }
+
+      .pods-intro__left {
+        min-width: 0;
+      }
+
+      .pods-intro__right {
+        display: flex;
+        justify-content: center;
+      }
+
+      .pods-intro h1 {
+        margin: 0;
+        font-size: 30px;
+      }
+
+      .pods-intro p {
+        margin: 10px 0 0;
+        opacity: 0.9;
+        line-height: 1.7;
+      }
+
+      .pods-chip-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+      }
+
+      .pods-chip {
+        padding: 5px 10px;
+        border: 1px solid rgba(148, 163, 184, 0.42);
+        border-radius: 999px;
+        font-size: 12px;
+        background: rgba(15, 23, 42, 0.52);
+      }
+
+      .pods-entry-list {
+        margin-top: 14px;
+        display: grid;
+        gap: 10px;
+        max-width: 700px;
+      }
+
+      .pods-entry-btn {
+        display: block;
+        text-decoration: none;
+        color: inherit;
+        border: 1px solid rgba(96, 165, 250, 0.34);
+        border-radius: 14px;
+        padding: 12px 14px;
+        background: linear-gradient(130deg, rgba(30, 58, 138, 0.2), rgba(15, 23, 42, 0.72));
+        box-shadow: 0 10px 24px rgba(2, 6, 23, 0.4), 0 0 0 1px rgba(56, 189, 248, 0.16) inset;
+        transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+      }
+
+      .pods-entry-btn:hover {
+        transform: translateY(-2px);
+        border-color: rgba(125, 211, 252, 0.8);
+        box-shadow: 0 16px 30px rgba(2, 6, 23, 0.52), 0 0 0 1px rgba(125, 211, 252, 0.28) inset;
+      }
+
+      .pods-entry-btn__title {
+        margin-top: 6px;
+        font-size: 20px;
+        font-weight: 700;
+        line-height: 1.25;
+      }
+
+      .pods-entry-btn__chip {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 11px;
+        border: 1px solid rgba(148, 163, 184, 0.55);
+        border-radius: 999px;
+        font-size: 12px;
+        line-height: 1;
+        letter-spacing: 0.1px;
+        background: rgba(15, 23, 42, 0.58);
+        color: rgba(226, 232, 240, 0.95);
+      }
+
+      .pods-entry-btn__desc {
+        margin-top: 6px;
+        font-size: 13px;
+        opacity: 0.9;
+        line-height: 1.55;
+      }
+
+      .pods-image-frame {
+        position: relative;
+        border-radius: 28px;
+        overflow: hidden;
+        border: 1px solid rgba(148, 163, 184, 0.75);
+        background: radial-gradient(circle at top, rgba(56, 189, 248, 0.2), transparent 55%),
+          radial-gradient(circle at bottom, rgba(34, 197, 94, 0.16), transparent 58%), rgba(15, 23, 42, 0.95);
+        box-shadow: 0 36px 68px rgba(15, 23, 42, 0.9);
+        width: min(100%, 500px);
+      }
+
+      .pods-image {
+        display: block;
+        width: 100%;
+        height: auto;
+        object-fit: cover;
+      }
+
+      .pods-image__overlay {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        padding: 10px 14px;
+        font-size: 12px;
+        letter-spacing: 0.18px;
+        background: linear-gradient(to top, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.2));
+        border-top: 1px solid rgba(148, 163, 184, 0.5);
+      }
+
+      .pods-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      @media (max-width: 980px) {
+        .pods-intro {
+          grid-template-columns: 1fr;
+        }
+
+        .pods-entry-btn__title {
+          font-size: 18px;
+        }
+
+        .pods-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .pods-back-btn {
+        border-color: rgba(34, 197, 94, 0.78);
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.32), rgba(56, 189, 248, 0.2));
+        color: rgba(240, 253, 244, 0.98);
+        box-shadow: 0 10px 24px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(34, 197, 94, 0.22) inset;
+        font-weight: 700;
+      }
+
+      .pods-back-btn:hover {
+        border-color: rgba(134, 239, 172, 0.98);
+        background: linear-gradient(135deg, rgba(34, 197, 94, 0.42), rgba(56, 189, 248, 0.28));
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand__title">Brain pods 智能检测系统</div>
+        <div class="brand__sub">Fatigue, Health Report and Neuro-Stimulation</div>
+      </div>
+      <div class="topbar__actions">
+        <a href="../index.html" class="btn pods-back-btn" style="text-decoration: none; line-height: 1;">返回主系统</a>
+      </div>
+    </header>
+
+    <main class="pods-page">
+      <section class="pods-intro">
+        <div class="pods-intro__left">
+          <h1>年轻人未来新穿戴设备：Brain pods</h1>
+          <div class="pods-entry-list">
+            <a class="pods-entry-btn" href="./brain-pods-fatigue.html">
+              <div class="pods-entry-btn__chip">疲劳检测 + 时间场景提醒</div>
+              <div class="pods-entry-btn__title">疲劳检测系统</div>
+              <div class="pods-entry-btn__desc">实时 EEG 节律分析，给出疲劳指数与时段化提醒。</div>
+            </a>
+
+            <a class="pods-entry-btn" href="./brain-pods-health.html">
+              <div class="pods-entry-btn__chip">周健康报告</div>
+              <div class="pods-entry-btn__title">健康检测系统</div>
+              <div class="pods-entry-btn__desc">汇总周指标并输出结构化风险评估与可视化分析。</div>
+            </a>
+
+            <a class="pods-entry-btn" href="./brain-pods-stim.html">
+              <div class="pods-entry-btn__chip">助眠 / 专注模式</div>
+              <div class="pods-entry-btn__title">助眠 / 专注系统</div>
+              <div class="pods-entry-btn__desc">按模式调节刺激强度，匹配不同场景的使用策略。</div>
+            </a>
+          </div>
+        </div>
+
+        <div class="pods-intro__right">
+          <div class="pods-image-frame">
+            <img src="../assets/pages/brain pods.jpeg" alt="Brain pods 非侵入式 EEG 设备示意图" class="pods-image" />
+            <div class="pods-image__overlay">Brain pods 非侵入式 EEG 设备 · 示意图</div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </body>
+</html>

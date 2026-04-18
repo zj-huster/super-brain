@@ -1,0 +1,459 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>运动想象按摩椅控制 · Motor Imagery Massage Chair</title>
+    <link rel="stylesheet" href="../assets/css/styles.css" />
+    <style>
+      .mi-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        padding: 6px 12px 12px 12px;
+        max-width: 1600px;
+        margin: 0 auto;
+        align-items: start;
+        min-height: calc(100vh - 72px);
+      }
+
+      @media (max-width: 1100px) {
+        .mi-layout {
+          grid-template-columns: 1fr;
+          gap: 8px;
+          padding: 4px 8px 8px 8px;
+        }
+      }
+
+      /* 左侧：按摩椅和交互部位 */
+      .mi-left {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .chair-container {
+        position: relative;
+        width: 100%;
+        max-width: 702px;
+        height: 783px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-top: -180px;
+      }
+
+      .chair-img {
+        width: 100%;
+        height: 100%;
+        object-fit: contain;
+        object-position: center;
+        filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.4));
+      }
+
+      /* 交互部位按钮 */
+      .body-part {
+        position: absolute;
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 700;
+        transition: all 0.25s ease;
+        border: 3px solid rgba(99, 102, 241, 0.5);
+        background: rgba(99, 102, 241, 0.15);
+        z-index: 10;
+        text-align: center;
+        padding: 4px;
+        box-shadow: 0 0 15px rgba(99, 102, 241, 0.3), inset 0 0 10px rgba(99, 102, 241, 0.1);
+        flex-direction: column;
+        gap: 2px;
+      }
+
+      .body-part::before {
+        content: '';
+        position: absolute;
+        inset: -8px;
+        border-radius: 50%;
+        border: 2px solid rgba(99, 102, 241, 0.2);
+        pointer-events: none;
+      }
+
+      .body-part:hover {
+        background: rgba(99, 102, 241, 0.28);
+        border-color: rgba(99, 102, 241, 1);
+        box-shadow: 0 0 35px rgba(99, 102, 241, 0.8), inset 0 0 15px rgba(99, 102, 241, 0.2);
+        transform: scale(1.15);
+      }
+
+      .body-part.active {
+        background: rgba(99, 102, 241, 0.5);
+        border-color: rgba(129, 140, 248, 1);
+        box-shadow: 0 0 50px rgba(99, 102, 241, 1), inset 0 0 20px rgba(99, 102, 241, 0.4);
+        animation: pulse 0.5s ease-out;
+      }
+
+      @keyframes pulse {
+        0% {
+          transform: scale(1.25);
+          opacity: 1;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+
+      /* 部位定位 - 适配扩大的按钮尺寸 */
+      .part-legs {
+        bottom: 42%;
+        left: 68%;
+      }
+
+      .part-arms {
+        top: 36%;
+        right: 220px;
+      }
+
+      .part-neck {
+        top: 26%;
+        right: 310px;
+      }
+
+      /* 文字说明 */
+      .mi-description {
+        background: rgba(16, 18, 24, 0.6);
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        border-radius: 12px;
+        padding: 12px;
+        font-size: 12px;
+        line-height: 1.8;
+        opacity: 0.85;
+        max-width: 550px;
+      }
+
+      .mi-description h3 {
+        margin: 0 0 4px;
+        font-size: 13px;
+        color: #c7d2fe;
+        font-weight: 600;
+      }
+
+      .mi-description p {
+        margin: 0 0 4px;
+      }
+
+      .mi-description p:last-child {
+        margin-bottom: 0;
+      }
+
+      .mi-highlight {
+        color: #a5b4fc;
+        font-weight: 500;
+      }
+
+      /* 右侧：脑电波形和反馈 */
+      .mi-right {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .eeg-panel {
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        border-radius: 16px;
+        background: linear-gradient(135deg, rgba(16, 18, 24, 0.95) 0%, rgba(30, 27, 75, 0.6) 100%);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(99, 102, 241, 0.1);
+        padding: 16px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .eeg-panel::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, 
+          transparent 0%, 
+          rgba(99, 102, 241, 0.6) 50%, 
+          transparent 100%);
+        animation: scanTop 3s ease-in-out infinite;
+      }
+
+      @keyframes scanTop {
+        0%, 100% { opacity: 0.3; }
+        50% { opacity: 1; }
+      }
+
+      .eeg-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 10px;
+        font-weight: 600;
+        position: relative;
+        z-index: 1;
+      }
+
+      .eeg-header span:first-child {
+        color: #e0e7ff;
+        text-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
+      }
+
+      .eeg-status {
+        font-weight: 500;
+        padding: 4px 12px;
+        border-radius: 12px;
+        background: rgba(99, 102, 241, 0.15);
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        color: #c7d2fe;
+        font-size: 11px;
+        transition: all 0.3s ease;
+      }
+
+      .eeg-canvas {
+        width: 100%;
+        height: 200px;
+        display: block;
+        border-radius: 8px;
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0.8) 0%, rgba(2, 6, 23, 0.95) 50%, rgba(15, 23, 42, 0.8) 100%);
+        border: 1px solid rgba(99, 102, 241, 0.2);
+        outline: none;
+        box-shadow: 
+          inset 0 0 30px rgba(0, 0, 0, 0.6),
+          inset 0 0 60px rgba(99, 102, 241, 0.05),
+          0 4px 20px rgba(0, 0, 0, 0.3);
+        position: relative;
+      }
+
+      .eeg-hint {
+        margin-top: 8px;
+        font-size: 10px;
+        opacity: 0.6;
+        color: #a5b4fc;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .eeg-hint::before {
+        content: '●';
+        color: rgba(99, 102, 241, 0.6);
+        font-size: 8px;
+        animation: blink 2s ease-in-out infinite;
+      }
+
+      @keyframes blink {
+        0%, 100% { opacity: 0.4; }
+        50% { opacity: 1; }
+      }
+
+      /* 状态反馈 */
+      .feedback-panel {
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 12px;
+        background: rgba(16, 18, 24, 0.6);
+        padding: 14px;
+      }
+
+      .feedback-title {
+        font-size: 12px;
+        font-weight: 600;
+        opacity: 0.8;
+        margin-bottom: 8px;
+      }
+
+      .feedback-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 12px;
+        padding: 8px;
+        background: rgba(99, 102, 241, 0.04);
+        border-radius: 6px;
+        margin-bottom: 6px;
+      }
+
+      .feedback-item:last-child {
+        margin-bottom: 0;
+      }
+
+      .feedback-label {
+        opacity: 0.7;
+      }
+
+      .feedback-value {
+        color: #a5b4fc;
+        font-weight: 600;
+      }
+
+      .feedback-item.active {
+        background: rgba(99, 102, 241, 0.15);
+        border-left: 2px solid rgba(99, 102, 241, 0.8);
+      }
+
+      /* 按钮组 */
+      .button-group {
+        display: flex;
+        gap: 8px;
+      }
+
+      .btn-action {
+        flex: 1;
+        padding: 10px;
+        background: rgba(99, 102, 241, 0.2);
+        border: 1px solid rgba(99, 102, 241, 0.5);
+        border-radius: 8px;
+        color: #c7d2fe;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 600;
+      }
+
+      .btn-action:hover {
+        background: rgba(99, 102, 241, 0.4);
+        border-color: rgba(99, 102, 241, 0.8);
+        box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
+      }
+
+      .btn-action:active {
+        transform: scale(0.95);
+      }
+
+      /* 信息卡片 */
+      .info-card {
+        background: rgba(16, 18, 24, 0.6);
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        border-radius: 12px;
+        padding: 12px;
+        font-size: 11px;
+        line-height: 1.6;
+        opacity: 0.85;
+      }
+
+      .info-card strong {
+        color: #a5b4fc;
+        display: block;
+        margin-bottom: 6px;
+      }
+
+      @media (max-width: 1100px) {
+        .part-arms,
+        .part-neck {
+          right: auto;
+          left: -50px;
+        }
+
+        .chair-container {
+          max-width: 405px;
+          height: 459px;
+        }
+
+        .body-part {
+          width: 39px;
+          height: 39px;
+          font-size: 8px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand__title">脑机接口家居控制</div>
+        <div class="brand__sub">Brain-Computer Interface · Smart Home Control</div>
+      </div>
+
+      <div class="topbar__actions">
+        <a href="../index.html" class="btn" style="text-decoration: none; line-height: 1;">首页</a>
+        <a href="./ssvep.html" class="btn" style="text-decoration: none; line-height: 1;">脑电图像重建</a>
+        <a href="./emotional.html" class="btn" style="text-decoration: none; line-height: 1;">情感检测</a>
+        <a href="./voice.html" class="btn" style="text-decoration: none; line-height: 1;">语音交互</a>
+      </div>
+    </header>
+
+    <main class="mi-layout">
+      <!-- 左侧：按摩椅和交互部位 -->
+      <div class="mi-left">
+        <!-- 功能说明 -->
+        <div class="mi-description">
+          <h3>🧠 运动想象控制原理</h3>
+          <p>
+            <span class="mi-highlight">运动想象 (Motor Imagery)</span> 是一种仅凭想象就能进行肢体运动的技术。无需实际动作，只需在脑中清晰地想象某个身体部位的运动。
+          </p>
+          <p>
+            当你<span class="mi-highlight">想象大腿、手臂或肩颈在运动</span>时，我们的系统会通过脑电波检测到这种想象过程，并实时驱动按摩椅的对应部位进行按摩。
+          </p>
+          <p>
+            这实现了真正的<span class="mi-highlight">无感化家居交互</span>——无需语音、无需动作、无需接触，仅通过大脑意念即可享受智能按摩体验。
+          </p>
+        </div>
+
+        <div class="chair-container">
+          <img src="../assets/pages/chair.png" alt="按摩椅" class="chair-img" />
+          
+          <!-- 交互按钮 -->
+          <div class="body-part part-legs" data-part="legs">大腿按摩</div>
+          <div class="body-part part-arms" data-part="arms">手臂按摩</div>
+          <div class="body-part part-neck" data-part="neck">肩颈按摩</div>
+        </div>
+      </div>
+
+      <!-- 右侧：脑电波形和反馈 -->
+      <div class="mi-right">
+        <!-- 脑电波形显示 -->
+        <div class="eeg-panel">
+          <div class="eeg-header">
+            <span>脑电波形实时监测 (EEG)</span>
+            <span class="eeg-status" id="eegStatus">待命中</span>
+          </div>
+          <canvas id="eegCanvas" class="eeg-canvas"></canvas>
+          <div class="eeg-hint">
+            脑电波形实时显示（单部位互斥触发，每次按摩 3 秒）
+          </div>
+        </div>
+
+        <!-- 按摩状态反馈 -->
+        <div class="feedback-panel">
+          <div class="feedback-title">按摩状态监测</div>
+          <div class="feedback-item" id="statusLegs">
+            <span class="feedback-label">大腿按摩</span>
+            <span class="feedback-value">待机</span>
+          </div>
+          <div class="feedback-item" id="statusArms">
+            <span class="feedback-label">手臂按摩</span>
+            <span class="feedback-value">待机</span>
+          </div>
+          <div class="feedback-item" id="statusNeck">
+            <span class="feedback-label">肩颈按摩</span>
+            <span class="feedback-value">待机</span>
+          </div>
+        </div>
+
+        <!-- 信息提示 -->
+        <div class="info-card">
+          <strong>✨ 无感化智能家居的未来</strong>
+          通过脑机接口技术，用户可以仅凭意念控制家居设备。在这个演示中，想象身体不同部位的运动会自动触发对应的按摩功能，实现完全的手势和语音自由——这是真正的人机融合时代的开始。
+        </div>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer__text">
+        提示：本页面为前端模拟演示，仅用于教学展示。所有脑电波形和按摩反馈基于模拟数据。
+      </div>
+    </footer>
+
+    <script src="../assets/js/mi-smart-home.js"></script>
+  </body>
+</html>

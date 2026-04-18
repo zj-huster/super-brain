@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>脑电图像重建机器人控制</title>
+    <link rel="stylesheet" href="../assets/css/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand__title">脑电图像重建机器人控制</div>
+        <div class="brand__sub">EEG 采集 -> 图像重建 -> 意图解码 -> 机器人执行</div>
+      </div>
+
+      <div class="topbar__actions">
+        <a href="../index.html" class="btn" style="text-decoration: none; line-height: 1;">首页</a>
+        <a href="./emotional.html" class="btn" style="text-decoration: none; line-height: 1;">情感检测</a>
+        <a href="./mi-smart-home.html" class="btn" style="text-decoration: none; line-height: 1;">运动想象</a>
+        <a href="./voice.html" class="btn" style="text-decoration: none; line-height: 1;">语音交互</a>
+      </div>
+    </header>
+
+    <main class="layout ssvep-layout">
+      <section class="panel ssvep-targets-panel">
+        <h2 class="panel__title">脑电图像重构示意图</h2>
+        <div class="reconstruction-hero">
+          <div class="reconstruction-hero__media">
+            <img src="../assets/pages/imagine.png" alt="脑电图像重构示意" class="reconstruction-hero__image" />
+          </div>
+          <div class="reconstruction-hero__copy">
+            <div class="group__title">图像重构示意</div>
+            <div class="group__desc">
+              通过脑电信号重构出对应任务意图，再映射到机器人执行顺序。这里保留的是重构逻辑展示，不再放候选任务列表。
+            </div>
+            <div class="reconstruction-hero__note">
+              左侧展示图像重构示意，右侧说明流程与含义，下面继续保留场景选择和机器人工作顺序。
+            </div>
+          </div>
+        </div>
+        <div class="group">
+          <div class="group__title">场景选择</div>
+          <div class="group__desc">点击图片选择一个或多个场景，支持连续决策控制。</div>
+          <div id="sceneGrid" class="scene-grid" aria-label="场景图片选择"></div>
+          <div id="selectedOrder" class="selected-order">已选顺序：未选择</div>
+        </div>
+        <div class="row">
+          <button id="btnStartStop" class="btn btn--primary" type="button">开始采集</button>
+        </div>
+      </section>
+
+      <aside class="panel panel--side">
+        <h2 class="panel__title">状态面板</h2>
+
+        <div class="group">
+          <div class="group__title">运行状态</div>
+          <div class="status">
+            <div class="status__row">
+              <span class="status__k">流程</span>
+              <span id="stimState" class="status__v">未开始</span>
+            </div>
+            <div class="status__row">
+              <span class="status__k">最近执行</span>
+              <span id="lastAction" class="status__v">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="group">
+          <div class="group__title">解码结果</div>
+          <div class="decode-card">
+            <div class="decode-card__state" id="decodeState">等待开始</div>
+            <div class="decode-card__scene" id="decodeScene">未选择场景</div>
+            <div class="decode-card__confidence" id="decodeConfidence">置信度：0%</div>
+          </div>
+        </div>
+
+        <div class="group">
+          <div class="group__title">连续指令队列</div>
+          <div id="commandQueue" class="command-queue"></div>
+          <div id="signalCaption" class="group__desc">等待开始模拟。</div>
+        </div>
+      </aside>
+    </main>
+
+    <footer class="footer">
+      <div class="footer__text">
+        说明：本页面为脑电图像重建与机器人控制交互演示，不包含真实 EEG 采集设备与模型推理服务。
+      </div>
+    </footer>
+
+    <script src="../assets/js/app.js"></script>
+  </body>
+</html>
+

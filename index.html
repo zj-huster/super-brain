@@ -1,0 +1,91 @@
+﻿<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>脑机接口家居控制 · 总页面</title>
+    <link rel="stylesheet" href="./assets/css/styles.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand__title">脑机接口家居控制</div>
+        <div class="brand__sub">Brain-Computer Interface · Smart Home Control</div>
+      </div>
+
+      <div class="topbar__actions">
+        <a href="./pages/ssvep.html" class="btn" style="text-decoration: none; line-height: 1;">脑电图像重建</a>
+        <a href="./pages/emotional.html" class="btn" style="text-decoration: none; line-height: 1;">情感检测</a>
+        <a href="./pages/mi-smart-home.html" class="btn" style="text-decoration: none; line-height: 1;">运动想象</a>
+        <a href="./pages/voice.html" class="btn" style="text-decoration: none; line-height: 1;">语音交互</a>
+      </div>
+    </header>
+
+    <main class="landing">
+      <section class="hero">
+        <div class="hero__left">
+          <h2 class="hero__title">从大脑到家居，只差一次注视</h2>
+
+          <div class="mode-cards">
+            <a class="mode-card" href="./pages/emotional.html">
+              <div class="mode-card__tag">情感脑机接口</div>
+              <div class="mode-card__title">情感检测</div>
+              <div class="mode-card__desc">
+                12 通道脑电波实时分析，自动检测用户的情感状态（放松 / 焦虑 / 压力等），并提供医学解释。
+              </div>
+            </a>
+
+            <a class="mode-card" href="./pages/mi-smart-home.html">
+              <div class="mode-card__tag">运动想象接口</div>
+              <div class="mode-card__title">MI 智能家居</div>
+              <div class="mode-card__desc">
+                通过想象肢体运动（左手、右手、双脚）驱动智能家居设备，无需语音与动作依赖，展示 MI 的自然人机交互优势。
+              </div>
+            </a>
+
+            <a class="mode-card" href="./pages/ssvep.html">
+              <div class="mode-card__tag">脑电图像重建</div>
+              <div class="mode-card__title">机器人意图控制</div>
+              <div class="mode-card__desc">
+                基于 EEG 信号重建任务意图图像，并映射到"扫地 / 拖地 / 倒茶 / 洗衣"等机器人动作，支持连续决策演示。
+              </div>
+            </a>
+
+            <a class="mode-card" href="./pages/voice.html">
+              <div class="mode-card__tag">语音识别与对话</div>
+              <div class="mode-card__title">智能管家语音交互</div>
+              <div class="mode-card__desc">
+                支持浏览器语音识别与"管家"模型响应，模拟家居控制与场景对话，适合演示自然语言交互体验。
+              </div>
+            </a>
+
+          </div>
+
+          <div class="hero__note">
+            本项目仅提供交互原型，不包含真实 EEG 采集设备与在线解码模型。请在专业环境中完成真实实验。
+          </div>
+        </div>
+
+        <div class="hero__right">
+          <div class="hero-image-frame">
+            <img src="./assets/pages/brain-cap.png" alt="脑电帽与非侵入式脑机接口示意图" class="hero-image" />
+            <div class="hero-image__overlay">非侵入式 EEG 设备 · 示意图</div>
+          </div>
+
+          <a class="hero-jump-panel" aria-label="系统快速跳转" href="./pages/brain-pods.html">
+            <div class="hero-jump-panel__title">年轻人未来新穿戴设备 · Brain pods</div>
+            <div class="hero-jump-panel__desc">
+              从主系统一键进入未来穿戴场景，体验专注增强、情绪陪伴和跨设备联控。
+            </div>
+          </a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="footer__text">
+        说明：本项目为前端原型，仅用于课程与实验展示，具体实验请在专业人员指导下进行。
+      </div>
+    </footer>
+  </body>
+</html>

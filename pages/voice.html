@@ -1,0 +1,565 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>语音交互 · 智能管家</title>
+    <link rel="stylesheet" href="../assets/css/styles.css" />
+    <style>
+      .voice-page {
+        font-family: "Source Han Serif SC", "Noto Serif SC", "STSong", "SimSun", serif;
+        background:
+          radial-gradient(900px 520px at 15% -10%, rgba(255, 187, 92, 0.18), transparent 60%),
+          radial-gradient(780px 420px at 90% 10%, rgba(88, 214, 255, 0.16), transparent 55%),
+          linear-gradient(120deg, rgba(15, 23, 42, 0.95), rgba(5, 10, 20, 0.95));
+        min-height: 100vh;
+      }
+
+      .voice-page::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+        background-size: 60px 60px;
+        pointer-events: none;
+        opacity: 0.6;
+      }
+
+      .voice-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.4fr);
+        gap: 18px;
+        padding: 24px 18px 32px;
+        max-width: 1200px;
+        margin: 0 auto;
+        position: relative;
+        z-index: 1;
+      }
+
+      @media (max-width: 980px) {
+        .voice-layout {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .voice-panel {
+        border-radius: 18px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        background: rgba(12, 16, 24, 0.78);
+        box-shadow: 0 26px 60px rgba(0, 0, 0, 0.5);
+        padding: 16px;
+      }
+
+      .chat-section {
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+
+      .panel-title {
+        font-size: 16px;
+        font-weight: 700;
+        letter-spacing: 0.4px;
+      }
+
+      .panel-sub {
+        font-size: 12px;
+        opacity: 0.7;
+        margin-top: 4px;
+      }
+
+      .status-pill {
+        padding: 6px 12px;
+        border-radius: 999px;
+        font-size: 11px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .status-pill--active {
+        border-color: rgba(255, 187, 92, 0.6);
+        background: rgba(255, 187, 92, 0.16);
+        color: #ffd89c;
+      }
+
+      .status-pill--error {
+        border-color: rgba(248, 113, 113, 0.6);
+        background: rgba(248, 113, 113, 0.12);
+        color: #fecaca;
+      }
+
+      .chat-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        max-height: 520px;
+        overflow-y: auto;
+        padding-right: 6px;
+      }
+
+      .text-command-form {
+        margin-top: 12px;
+        display: flex;
+        gap: 8px;
+        align-items: center;
+      }
+
+      .text-command-input {
+        flex: 1;
+        min-width: 0;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        background: rgba(15, 23, 42, 0.9);
+        color: rgba(255, 255, 255, 0.95);
+        padding: 10px 12px;
+        font-size: 13px;
+      }
+
+      .text-command-input:focus {
+        outline: none;
+        border-color: rgba(255, 187, 92, 0.55);
+      }
+
+      .text-command-send {
+        border-radius: 10px;
+        border: 1px solid rgba(255, 187, 92, 0.4);
+        background: rgba(255, 187, 92, 0.2);
+        color: #ffe7bf;
+        font-size: 12px;
+        font-weight: 600;
+        padding: 10px 14px;
+        cursor: pointer;
+      }
+
+      .text-command-send:hover {
+        background: rgba(255, 187, 92, 0.3);
+      }
+
+      .chat-placeholder {
+        font-size: 13px;
+        opacity: 0.6;
+        padding: 18px;
+        border-radius: 12px;
+        border: 1px dashed rgba(255, 255, 255, 0.15);
+      }
+
+      .bubble {
+        display: inline-flex;
+        flex-direction: column;
+        max-width: 85%;
+        padding: 10px 12px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        font-size: 13px;
+        line-height: 1.6;
+        animation: bubbleIn 0.2s ease;
+      }
+
+      .bubble--user {
+        align-self: flex-end;
+        background: rgba(255, 187, 92, 0.2);
+        border-color: rgba(255, 187, 92, 0.35);
+      }
+
+      .bubble--assistant {
+        align-self: flex-start;
+        background: rgba(88, 214, 255, 0.16);
+        border-color: rgba(88, 214, 255, 0.32);
+      }
+
+      .bubble__meta {
+        font-size: 10px;
+        opacity: 0.6;
+        margin-top: 4px;
+      }
+
+      .bubble--thinking {
+        opacity: 0.7;
+        font-style: italic;
+      }
+
+      .mic-card {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        padding: 16px;
+        border-radius: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(7, 12, 22, 0.7);
+      }
+
+      .mic-btn {
+        width: 96px;
+        height: 96px;
+        border-radius: 50%;
+        border: 2px solid rgba(255, 187, 92, 0.35);
+        background: radial-gradient(circle at top, rgba(255, 187, 92, 0.3), rgba(255, 187, 92, 0.08));
+        color: #ffe4b5;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+      }
+
+      .mic-btn.is-listening {
+        box-shadow: 0 0 30px rgba(255, 187, 92, 0.6);
+        transform: scale(1.02);
+      }
+
+      .mic-status {
+        font-size: 12px;
+        opacity: 0.75;
+      }
+
+      .voice-wave {
+        width: 100%;
+        height: 40px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, rgba(88, 214, 255, 0.1), rgba(255, 187, 92, 0.2));
+        position: relative;
+        overflow: hidden;
+      }
+
+      .voice-wave::after {
+        content: "";
+        position: absolute;
+        inset: 6px 10px;
+        border-radius: 999px;
+        background: linear-gradient(90deg, rgba(88, 214, 255, 0.35), rgba(255, 187, 92, 0.45));
+        opacity: 0.6;
+        transform: translateX(-60%);
+        animation: waveMove 2s linear infinite;
+      }
+
+      .voice-wave.is-idle::after {
+        animation-play-state: paused;
+        opacity: 0.3;
+      }
+
+      .select-row {
+        margin-top: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        font-size: 12px;
+      }
+
+      .select-row select {
+        border-radius: 10px;
+        padding: 8px 10px;
+        background: rgba(15, 23, 42, 0.95);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        color: rgba(255, 255, 255, 0.9);
+        cursor: pointer;
+      }
+
+      .select-row select option {
+        background: rgba(15, 23, 42, 0.98);
+        color: rgba(255, 255, 255, 0.9);
+        padding: 8px;
+      }
+
+      .select-row select:focus {
+        outline: none;
+        border-color: rgba(255, 187, 92, 0.5);
+      }
+
+      .device-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 14px;
+      }
+
+      .device-card {
+        padding: 12px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.04);
+        font-size: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .device-card__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .device-card span {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+      }
+
+      .device-card__controls {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
+
+      .ctrl-btn {
+        padding: 8px 10px;
+        min-height: 42px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        background: rgba(255, 255, 255, 0.08);
+        color: rgba(255, 255, 255, 0.9);
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        white-space: nowrap;
+      }
+
+      .ctrl-btn:hover {
+        background: rgba(255, 187, 92, 0.25);
+        border-color: rgba(255, 187, 92, 0.5);
+        transform: translateY(-1px);
+      }
+
+      .ctrl-btn:active {
+        transform: translateY(0);
+      }
+
+      .ctrl-btn--active {
+        background: rgba(88, 214, 255, 0.2);
+        border-color: rgba(88, 214, 255, 0.4);
+        color: #a5f3fc;
+      }
+
+      .ctrl-btn--small {
+        padding: 8px 10px;
+        font-size: 12px;
+      }
+
+      @media (max-width: 540px) {
+        .device-card__controls {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .assistant-card {
+        margin-top: 14px;
+        padding: 12px;
+        border-radius: 14px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.04);
+        font-size: 12px;
+        line-height: 1.6;
+      }
+
+      .video-wrap {
+        position: absolute;
+        bottom: 16px;
+        left: 16px;
+        right: 16px;
+        display: none;
+        z-index: 10;
+      }
+
+      .video-wrap.is-visible {
+        display: block;
+        animation: videoSlideUp 0.4s ease;
+      }
+
+      .video-display {
+        width: 100%;
+        max-height: 260px;
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+        background: #000;
+      }
+
+      .video-caption {
+        margin-top: 8px;
+        padding: 8px 10px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        background: linear-gradient(120deg, rgba(18, 24, 36, 0.82), rgba(13, 19, 30, 0.82));
+        color: rgba(235, 241, 255, 0.95);
+        font-size: 12px;
+        line-height: 1.5;
+        letter-spacing: 0.2px;
+      }
+
+      @keyframes videoSlideUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes waveMove {
+        0% {
+          transform: translateX(-60%);
+        }
+        100% {
+          transform: translateX(60%);
+        }
+      }
+
+      @keyframes bubbleIn {
+        from {
+          transform: translateY(6px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body class="voice-page">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand__title">语音交互 · 智能管家</div>
+        <div class="brand__sub">Speech Recognition + Smart Butler Response</div>
+      </div>
+
+      <div class="topbar__actions">
+        <a href="../index.html" class="btn" style="text-decoration: none; line-height: 1;">首页</a>
+        <a href="./ssvep.html" class="btn" style="text-decoration: none; line-height: 1;">图像重构页面</a>
+        <a href="./emotional.html" class="btn" style="text-decoration: none; line-height: 1;">情感检测</a>
+        <a href="./mi-smart-home.html" class="btn" style="text-decoration: none; line-height: 1;">运动想象</a>
+      </div>
+    </header>
+
+    <main class="voice-layout">
+      <aside class="voice-panel">
+        <div class="panel-title">语音控制台</div>
+        <div class="mic-card">
+          <button id="btnMic" class="mic-btn" type="button">按下<br />聆听</button>
+          <div id="micStatus" class="mic-status">等待授权麦克风</div>
+          <div id="voiceWave" class="voice-wave is-idle"></div>
+        </div>
+
+        <div class="select-row">
+          <span>识别语言</span>
+          <select id="selectLang">
+            <option value="zh-CN" selected>中文 (zh-CN)</option>
+            <option value="en-US">English US (en-US)</option>
+            <option value="en-GB">English UK (en-GB)</option>
+            <option value="ja-JP">日本語 (ja-JP)</option>
+            <option value="ko-KR">한국어 (ko-KR)</option>
+            <option value="fr-FR">Français (fr-FR)</option>
+            <option value="de-DE">Deutsch (de-DE)</option>
+            <option value="es-ES">Español (es-ES)</option>
+            <option value="ru-RU">Русский (ru-RU)</option>
+            <option value="zh-HK">粵語 (zh-HK)</option>
+            <option value="zh-TW">國語 (zh-TW)</option>
+          </select>
+        </div>
+
+        <div class="device-grid">
+          <div class="device-card">
+            <div class="device-card__header">
+              <span>客厅灯</span>
+              <span id="statusLights">50%</span>
+            </div>
+            <div class="device-card__controls">
+              <button class="ctrl-btn" id="btnLightsOn">调亮10%</button>
+              <button class="ctrl-btn" id="btnLightsOff">调暗10%</button>
+            </div>
+          </div>
+          <div class="device-card">
+            <div class="device-card__header">
+              <span>窗帘</span>
+              <span id="statusCurtains">50%</span>
+            </div>
+            <div class="device-card__controls">
+              <button class="ctrl-btn" id="btnCurtainsOpen">透光增加10%</button>
+              <button class="ctrl-btn" id="btnCurtainsClose">透光减少10%</button>
+            </div>
+          </div>
+          <div class="device-card">
+            <div class="device-card__header">
+              <span>空调温度</span>
+              <span id="statusTemp">26°C</span>
+            </div>
+            <div class="device-card__controls">
+              <button class="ctrl-btn ctrl-btn--small" id="btnTempUp">调高1度</button>
+              <button class="ctrl-btn ctrl-btn--small" id="btnTempDown">调低1度</button>
+            </div>
+          </div>
+          <div class="device-card">
+            <div class="device-card__header">
+              <span>音乐</span>
+              <span id="statusMusic">50 dB</span>
+            </div>
+            <div class="device-card__controls">
+              <button class="ctrl-btn" id="btnMusicPlay">调高1分贝</button>
+              <button class="ctrl-btn" id="btnMusicStop">调低1分贝</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="assistant-card">
+          管家模式：根据语音识别结果进行意图判断，执行家居微调。示例指令：客厅灯调亮10%、窗帘透光增加10%、空调调高1度、音量调低1分贝。
+        </div>
+      </aside>
+
+      <section class="voice-panel chat-section">
+        <div class="panel-header">
+          <div>
+            <div class="panel-title">语音对话</div>
+            <div class="panel-sub">示例：客厅灯调亮10% / 窗帘透光减少10% / 空调调低1度 / 音量调高1分贝</div>
+          </div>
+          <div id="voiceStatus" class="status-pill">待机</div>
+        </div>
+
+        <div id="chatList" class="chat-list">
+          <div id="chatPlaceholder" class="chat-placeholder">
+            点击左侧麦克风开始，系统会显示识别文本与智能管家回答。
+          </div>
+        </div>
+
+        <form id="textCommandForm" class="text-command-form" autocomplete="off">
+          <input
+            id="textCommandInput"
+            class="text-command-input"
+            type="text"
+            placeholder="输入文字指令，例如：窗帘透光增加10%"
+            maxlength="80"
+          />
+          <button id="btnTextSend" class="text-command-send" type="submit">发送指令</button>
+        </form>
+
+        <div id="videoWrap" class="video-wrap">
+          <video id="curtainVideo" class="video-display" autoplay muted></video>
+          <div id="videoCaption" class="video-caption"></div>
+        </div>
+      </section>
+    </main>
+
+    <script src="../assets/js/voice.js"></script>
+  </body>
+</html>

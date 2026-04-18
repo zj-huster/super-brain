@@ -108,19 +108,30 @@
 
   function playVideo(videoFile, captionText) {
     if (!el.curtainVideo || !el.videoWrap) return;
-    
-    el.curtainVideo.src = videoFile;
+
+    // Voice page lives under /pages, so resolve to ../assets/videos/* consistently.
+    const resolvedSrc = new URL(`../assets/videos/${videoFile}`, window.location.href).href;
+
+    el.curtainVideo.pause();
+    el.curtainVideo.currentTime = 0;
+    el.curtainVideo.src = resolvedSrc;
     el.videoWrap.classList.add("is-visible");
     if (el.videoCaption) {
       el.videoCaption.textContent = captionText || "智能管家执行中：正在同步更新设备状态。";
     }
-    
+
+    el.curtainVideo.load();
     el.curtainVideo.play().catch(err => {
       console.error("视频播放失败：", err);
     });
-    
+
     // 视频播放结束后隐藏
     el.curtainVideo.onended = () => {
+      el.videoWrap.classList.remove("is-visible");
+    };
+
+    el.curtainVideo.onerror = () => {
+      console.error("视频资源加载失败：", resolvedSrc);
       el.videoWrap.classList.remove("is-visible");
     };
   }
@@ -187,14 +198,28 @@
       return "我没有听清，请再说一次。";
     }
 
-    const lightsUp = hasAllKeywords(raw, ["客厅灯"]) && isMatch(raw, ["调亮10%", "调亮一些", "调亮一点", "亮一些", "亮一点"]);
-    const lightsDown = hasAllKeywords(raw, ["客厅灯"]) && isMatch(raw, ["调暗10%", "调暗一些", "调暗一点", "暗一些", "暗一点"]);
-    const curtainMore = hasAllKeywords(raw, ["窗帘", "透光"]) && isMatch(raw, ["增加10%", "多10%", "透光多一些", "透光多一点", "透光多"]);
-    const curtainLess = hasAllKeywords(raw, ["窗帘", "透光"]) && isMatch(raw, ["减少10%", "少10%", "透光少一些", "透光少一点", "透光少"]);
-    const musicUp = hasAllKeywords(raw, ["音量"]) && isMatch(raw, ["调高1分贝", "调高一些", "调高一点", "高一些", "高一点"]);
-    const musicDown = hasAllKeywords(raw, ["音量"]) && isMatch(raw, ["调低1分贝", "调低一些", "调低一点", "低一些", "低一点"]);
-    const acUp = hasAllKeywords(raw, ["空调"]) && isMatch(raw, ["调高1度", "升高1度", "高1度"]);
-    const acDown = hasAllKeywords(raw, ["空调"]) && isMatch(raw, ["调低1度", "降低1度", "低1度"]);
+    const lightsContext = isMatch(raw, ["客厅灯", "灯光", "灯"]);
+    const lightsUp = lightsContext && isMatch(raw, ["调亮10%", "调亮一些", "调亮一点", "亮一些", "亮一点", "灯光调亮", "调亮灯光", "灯调亮", "亮一点灯"]);
+    const lightsDown = lightsContext && isMatch(raw, ["调暗10%", "调暗一些", "调暗一点", "暗一些", "暗一点", "灯光调暗", "调暗灯光", "灯调暗", "暗一点灯"]);
+    const curtainContext = isMatch(raw, ["窗帘", "透光", "透光率"]);
+    const curtainMore =
+      (curtainContext && isMatch(raw, ["增加10%", "多10%", "透光多一些", "透光多一点", "透光多", "增加透光", "透光增加", "透光调高", "调高透光", "提高透光", "透光率提高"])) ||
+      hasAllKeywords(raw, ["增加", "透光"]) ||
+      hasAllKeywords(raw, ["调高", "透光"]) ||
+      hasAllKeywords(raw, ["提高", "透光"]);
+    const curtainLess =
+      (curtainContext && isMatch(raw, ["减少10%", "少10%", "透光少一些", "透光少一点", "透光少", "减少透光", "透光减少", "透光调低", "调低透光", "降低透光", "透光率降低"])) ||
+      hasAllKeywords(raw, ["减少", "透光"]) ||
+      hasAllKeywords(raw, ["调低", "透光"]) ||
+      hasAllKeywords(raw, ["降低", "透光"]);
+
+    const musicContext = isMatch(raw, ["音量", "音响", "声音", "分贝"]);
+    const musicUp = musicContext && isMatch(raw, ["调高1分贝", "调高一些", "调高一点", "调高一点点", "高一些", "高一点", "音量调高", "音量调高一点", "调高音量", "音量提高", "提高音量", "声音调大", "分贝调高"]);
+    const musicDown = musicContext && isMatch(raw, ["调低1分贝", "调低一些", "调低一点", "调低一点点", "低一些", "低一点", "音量调低", "音量调低一点", "调低音量", "音量降低", "降低音量", "声音调小", "分贝调低"]);
+
+    const acContext = isMatch(raw, ["空调", "温度", "室温"]);
+    const acUp = acContext && isMatch(raw, ["调高1度", "升高1度", "高1度", "温度调高", "调高温度", "温度升高", "升高温度", "温度提高", "提高温度"]);
+    const acDown = acContext && isMatch(raw, ["调低1度", "降低1度", "低1度", "温度调低", "调低温度", "温度降低", "降低温度"]);
 
     if (lightsUp) {
       state.devices.lightsBrightness = Math.min(100, state.devices.lightsBrightness + 10);
@@ -234,13 +259,11 @@
 
     if (acUp) {
       state.devices.temp = Math.min(30, state.devices.temp + 1);
-      playVideo("turn on.mp4", "空调温度 +1°C，环境更温暖。");
       return `已将空调调高1度，当前 ${state.devices.temp}°C。`;
     }
 
     if (acDown) {
       state.devices.temp = Math.max(16, state.devices.temp - 1);
-      playVideo("turn off.mp4", "空调温度 -1°C，环境更清凉。");
       return `已将空调调低1度，当前 ${state.devices.temp}°C。`;
     }
 
@@ -426,7 +449,6 @@
 
   el.btnTempUp.addEventListener("click", () => {
     state.devices.temp = Math.min(30, state.devices.temp + 1);
-    playVideo("turn on.mp4", "空调温度 +1°C，环境更温暖。");
     addMessage("user", "[按钮] 空调调高1度");
     addMessage("assistant", `已将空调调高1度，当前 ${state.devices.temp}°C。`);
     renderDevices();
@@ -434,7 +456,6 @@
 
   el.btnTempDown.addEventListener("click", () => {
     state.devices.temp = Math.max(16, state.devices.temp - 1);
-    playVideo("turn off.mp4", "空调温度 -1°C，环境更清凉。");
     addMessage("user", "[按钮] 空调调低1度");
     addMessage("assistant", `已将空调调低1度，当前 ${state.devices.temp}°C。`);
     renderDevices();

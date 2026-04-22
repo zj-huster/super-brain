@@ -39,6 +39,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 获取状态显示元素
   statusElements = {
     eeg: document.getElementById('eegStatus'),
+    eegText: document.getElementById('eegStatusText'),
     legs: document.getElementById('statusLegs'),
     arms: document.getElementById('statusArms'),
     neck: document.getElementById('statusNeck')
@@ -93,8 +94,8 @@ function activateBodyPart(partName, partElement) {
     neck: '肩颈按摩'
   };
   
-  if (statusElements.eeg) {
-    statusElements.eeg.textContent = `激活中(3s) - ${partNames[partName]}`;
+  if (statusElements.eegText) {
+    statusElements.eegText.textContent = `激活中(3s) - ${partNames[partName]}`;
   }
 
   // 更新对应部位的状态
@@ -120,8 +121,8 @@ function deactivateBodyPart() {
   state.eegMode = 'idle';
   state.eegBurstUntil = 0;
   
-  if (statusElements.eeg) {
-    statusElements.eeg.textContent = '待命中';
+  if (statusElements.eegText) {
+    statusElements.eegText.textContent = '待命中';
   }
 
   // 重置所有部位状态

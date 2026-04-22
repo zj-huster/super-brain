@@ -8,10 +8,16 @@
     <style>
       .emotional-layout {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) 180px 220px;
+        grid-template-columns: minmax(0, 72%) minmax(250px, 28%);
         gap: 16px;
         padding: 16px;
+        width: 100%;
         max-width: 100%;
+        box-sizing: border-box;
+        align-items: stretch;
+        height: calc(100dvh - 76px);
+        min-height: calc(100vh - 76px);
+        overflow: hidden;
       }
 
       @media (max-width: 1200px) {
@@ -23,20 +29,23 @@
       .eeg-panel {
         border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 16px;
-        background: rgba(16, 18, 24, 0.6);
+        background: linear-gradient(145deg, rgba(12, 18, 34, 0.7), rgba(10, 15, 28, 0.82));
         box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
         padding: 12px;
+        flex: 1;
         min-height: 0;
         min-width: 0;
         max-width: 100%;
         overflow: hidden;
+        display: flex;
+        flex-direction: column;
       }
 
       .eeg-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
       }
 
       .eeg-header h2 {
@@ -49,10 +58,12 @@
         display: flex;
         flex-direction: column;
         gap: 1px;
-        max-height: 500px;
+        height: min(52vh, 430px);
+        max-height: min(52vh, 430px);
+        flex: 0 0 auto;
         overflow-y: auto;
         overflow-x: hidden;
-        padding: 6px;
+        padding: 4px;
         border: 1px solid rgba(255, 255, 255, 0.06);
         border-radius: 10px;
         background: rgba(0, 0, 0, 0.3);
@@ -62,10 +73,10 @@
 
       .channel {
         display: grid;
-        grid-template-columns: 38px minmax(0, 1fr);
-        gap: 6px;
+        grid-template-columns: 60px minmax(0, 1fr);
+        gap: 5px;
         align-items: center;
-        padding: 4px 4px;
+        padding: 3px 4px;
         background: rgba(255, 255, 255, 0.02);
         border-radius: 4px;
         font-size: 10px;
@@ -78,13 +89,13 @@
         font-weight: 600;
         opacity: 0.8;
         text-align: center;
-        min-width: 38px;
-        font-size: 9px;
+        min-width: 60px;
+        font-size: 10px;
         flex-shrink: 0;
       }
 
       .channel__canvas {
-        height: 34px;
+        height: 30px;
         width: 100%;
         max-width: 100%;
         background: rgba(0, 0, 0, 0.4);
@@ -106,14 +117,16 @@
       .emotion-sidebar {
         border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 16px;
-        background: rgba(16, 18, 24, 0.6);
+        background: linear-gradient(150deg, rgba(12, 18, 34, 0.68), rgba(10, 15, 28, 0.86));
         box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
-        padding: 12px;
+        padding: 16px;
         display: flex;
         flex-direction: column;
-        gap: 12px;
+        gap: 16px;
         overflow-y: auto;
-        max-height: calc(100vh - 120px);
+        overflow-x: hidden;
+        height: 100%;
+        min-height: 0;
       }
 
       .emotion-state {
@@ -125,13 +138,13 @@
 
       .emotion-state h3 {
         margin: 0 0 6px;
-        font-size: 16px;
+        font-size: 18px;
         font-weight: 700;
       }
 
       .emotion-state p {
         margin: 0;
-        font-size: 12px;
+        font-size: 13px;
         opacity: 0.85;
         line-height: 1.4;
       }
@@ -177,7 +190,7 @@
         border: 1px solid rgba(148, 163, 184, 0.2);
         border-radius: 8px;
         padding: 10px;
-        font-size: 11px;
+        font-size: 12px;
         line-height: 1.5;
         opacity: 0.85;
         display: none;
@@ -189,7 +202,7 @@
 
       .medical-info h4 {
         margin: 0 0 4px;
-        font-size: 11px;
+        font-size: 12px;
         font-weight: 700;
         opacity: 0.9;
       }
@@ -204,59 +217,282 @@
       }
 
       .stats-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
       }
 
       .stat-item {
-        background: rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        border-radius: 6px;
-        padding: 8px;
-        text-align: center;
+        min-height: 68px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        border-radius: 12px;
+        background: linear-gradient(145deg, rgba(8, 14, 28, 0.88), rgba(15, 23, 42, 0.62));
+        border: 1px solid rgba(125, 211, 252, 0.22);
+        box-shadow: 0 0 16px rgba(56, 189, 248, 0.08), inset 0 0 0 1px rgba(125, 211, 252, 0.05);
+      }
+
+      .stat-left {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
       }
 
       .stat-label {
-        font-size: 10px;
+        font-size: 11px;
         opacity: 0.7;
-        margin-bottom: 3px;
+        margin-bottom: 0;
       }
 
       .stat-value {
-        font-size: 14px;
+        font-size: 16px;
         font-weight: 700;
         color: #5b8cff;
+        line-height: 1;
+        text-shadow: 0 0 12px rgba(91, 140, 255, 0.26);
       }
 
-      /* 生命体征卡片样式 */
+      .stat-spark {
+        width: 96px;
+        height: 28px;
+        display: block;
+        opacity: 0.95;
+      }
+
+      .stat-spark polyline {
+        fill: none;
+        stroke-width: 2.2;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+      }
+
+      .stat-spark--alpha polyline {
+        stroke: #60a5fa;
+      }
+
+      .stat-spark--beta polyline {
+        stroke: #38bdf8;
+      }
+
+      .stat-spark--theta polyline {
+        stroke: #818cf8;
+      }
+
+      .stat-spark--delta polyline {
+        stroke: #22d3ee;
+      }
+
+      .emotion-main {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+        min-height: 0;
+        height: 100%;
+        overflow: hidden;
+      }
+
+      .vitals-container {
+        border: 1px solid rgba(148, 163, 184, 0.24);
+        border-radius: 16px;
+        padding: 12px;
+        background: linear-gradient(145deg, rgba(10, 15, 28, 0.74), rgba(15, 23, 42, 0.55));
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .vital-signs-panel {
+        border: 1px solid rgba(148, 163, 184, 0.24);
+        border-radius: 16px;
+        padding: 16px;
+        background: linear-gradient(145deg, rgba(10, 15, 28, 0.74), rgba(15, 23, 42, 0.55));
+        box-shadow: 0 12px 30px rgba(0, 0, 0, 0.25), 0 0 24px rgba(59, 130, 246, 0.08);
+      }
+
+      .vital-signs-grid {
+        display: grid;
+        grid-template-columns: 1.2fr 1fr 1fr;
+        gap: 16px;
+      }
+
+      .vital-panel-card {
+        min-height: 196px;
+        border-radius: 16px;
+        border: 1px solid rgba(125, 211, 252, 0.26);
+        background: linear-gradient(160deg, rgba(12, 20, 36, 0.95), rgba(15, 23, 42, 0.72));
+        box-shadow: 0 12px 26px rgba(0, 0, 0, 0.32), inset 0 0 0 1px rgba(59, 130, 246, 0.12);
+        overflow: hidden;
+      }
+
+      .vital-photo-card {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .vital-photo-media {
+        position: relative;
+        height: 196px;
+        min-height: 180px;
+        max-height: 220px;
+      }
+
+      .vital-photo-media img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center 28%;
+        display: block;
+      }
+
+      .vital-photo-overlay {
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(2, 6, 23, 0.04), rgba(2, 6, 23, 0.46));
+        pointer-events: none;
+      }
+
+      .vital-photo-copy {
+        padding: 12px;
+        border-top: 1px solid rgba(148, 163, 184, 0.24);
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .vital-photo-title {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+      }
+
+      .vital-photo-subtitle {
+        margin: 0;
+        font-size: 11px;
+        opacity: 0.76;
+      }
+
+      .vital-metric-card {
+        padding: 16px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 88px;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .vital-metric-label {
+        margin: 0;
+        font-size: 12px;
+        opacity: 0.84;
+      }
+
+      .vital-metric-value {
+        margin-top: 8px;
+        display: flex;
+        align-items: baseline;
+        gap: 6px;
+      }
+
+      .vital-metric-value-number {
+        font-size: 30px;
+        line-height: 1;
+        font-weight: 800;
+        color: #5b8cff;
+        text-shadow: 0 0 16px rgba(91, 140, 255, 0.32);
+      }
+
+      .vital-metric-unit {
+        font-size: 12px;
+        opacity: 0.72;
+      }
+
+      .vital-metric-range {
+        margin-top: 8px;
+        font-size: 11px;
+        opacity: 0.66;
+      }
+
+      .vital-ring-wrap {
+        position: relative;
+        width: 88px;
+        height: 88px;
+        display: grid;
+        place-items: center;
+      }
+
+      .vital-ring {
+        width: 88px;
+        height: 88px;
+        transform: rotate(-90deg);
+        filter: drop-shadow(0 0 8px rgba(91, 140, 255, 0.2));
+      }
+
+      .vital-ring-bg {
+        fill: none;
+        stroke: rgba(148, 163, 184, 0.25);
+        stroke-width: 7;
+      }
+
+      .vital-ring-fg {
+        fill: none;
+        stroke: #60a5fa;
+        stroke-width: 7;
+        stroke-linecap: round;
+        transition: stroke-dashoffset 0.4s ease;
+      }
+
+      .vital-ring-center {
+        position: absolute;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+      }
+
+      .vital-ring-center-number {
+        font-size: 14px;
+        font-weight: 700;
+        color: #93c5fd;
+      }
+
+      .vital-ring-center-unit {
+        margin-top: 2px;
+        font-size: 9px;
+        opacity: 0.65;
+      }
+
       .vitals-section-title {
         font-size: 11px;
         font-weight: 700;
         opacity: 0.8;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        margin: 0 0 8px;
+        margin: 0 0 10px;
       }
 
-      .vitals-container {
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 16px;
-        background: rgba(16, 18, 24, 0.6);
-        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
-        padding: 12px;
+      .vitals-row {
         display: flex;
-        flex-direction: column;
-        gap: 10px;
+        gap: 16px;
+        flex-wrap: wrap;
       }
 
       .vital-card {
-        background: rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 8px;
+        background: linear-gradient(160deg, rgba(255, 255, 255, 0.1), rgba(148, 163, 184, 0.06));
+        border: 1px solid rgba(125, 211, 252, 0.2);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+        border-radius: 14px;
         padding: 10px;
         display: flex;
         flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        flex: 1 1 220px;
         gap: 4px;
       }
 
@@ -298,6 +534,87 @@
         width: fit-content;
       }
 
+      .smart-home-card {
+        position: relative;
+        border-radius: 14px;
+        padding: 12px;
+        border: 1px solid rgba(125, 211, 252, 0.34);
+        background: linear-gradient(140deg, rgba(10, 15, 28, 0.9), rgba(30, 41, 59, 0.65));
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35), 0 0 22px rgba(56, 189, 248, 0.16);
+      }
+
+      .smart-home-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        padding: 1px;
+        background: linear-gradient(120deg, rgba(56, 189, 248, 0.65), rgba(34, 197, 94, 0.42));
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: xor;
+        mask-composite: exclude;
+        pointer-events: none;
+      }
+
+      .smart-home-title {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 700;
+        letter-spacing: 0.3px;
+      }
+
+      .smart-home-state {
+        margin-top: 6px;
+        font-size: 12px;
+        opacity: 0.8;
+      }
+
+      .env-rows {
+        margin-top: 10px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .env-row {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+      }
+
+      .env-value {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, 'Liberation Mono', monospace;
+        color: rgba(186, 230, 253, 0.95);
+      }
+
+      .env-message {
+        margin-top: 10px;
+        padding: 8px 10px;
+        border-radius: 10px;
+        border: 1px solid rgba(148, 163, 184, 0.24);
+        background: rgba(2, 6, 23, 0.44);
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      .fade-pulse {
+        animation: fadePulse 0.72s ease;
+      }
+
+      @keyframes fadePulse {
+        0% {
+          opacity: 0.3;
+          transform: translateY(4px);
+        }
+        100% {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
       .vital-badge-ok {
         background: rgba(34, 197, 94, 0.15);
         color: #86efac;
@@ -316,15 +633,59 @@
         border-color: rgba(239, 68, 68, 0.35);
       }
 
+      @media (max-width: 1280px) {
+        .vital-signs-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .vital-panel-card {
+          min-height: 200px;
+        }
+
+        .vital-photo-media {
+          height: 210px;
+        }
+      }
+
       .btn-group {
         display: flex;
-        gap: 8px;
+        flex-direction: row;
+        gap: 12px;
+        margin-top: 0;
       }
 
       .btn-group button {
-        flex: 1;
-        font-size: 12px;
+        width: auto;
+        min-width: 0;
+        flex: 1 1 0;
+        font-size: 13px;
         padding: 8px 10px;
+      }
+
+      .btn-group .btn:not(.btn--primary) {
+        background: rgba(148, 163, 184, 0.16);
+        border-color: rgba(148, 163, 184, 0.22);
+        color: rgba(226, 232, 240, 0.9);
+      }
+
+      @media (max-width: 960px) {
+        .emotional-layout {
+          grid-template-columns: 1fr;
+          height: auto;
+          min-height: auto;
+          overflow: visible;
+        }
+
+        .emotion-sidebar {
+          max-height: none;
+          height: auto;
+        }
+
+        .eeg-channels {
+          height: 420px;
+          max-height: 420px;
+          flex: initial;
+        }
       }
     </style>
   </head>
@@ -343,93 +704,95 @@
       </div>
     </header>
 
-    <main class="emotional-layout">
-      <div class="eeg-panel">
-        <div class="eeg-header">
-          <h2>24 通道脑电波 (模拟)</h2>
-          <span id="status" style="font-size: 12px; opacity: 0.7;">准备就绪</span>
-        </div>
-        <div class="eeg-channels" id="channels"></div>
-      </div>
-
-      <!-- 生命体征指标 - 波形右侧 -->
-      <div class="vitals-container">
-        <div style="margin-bottom: 10px; display: flex; justify-content: center;">
-          <img src="../assets/pages/health.png" alt="健康监测示意图" style="width: 100%; max-width: 180px; height: auto; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);" />
-        </div>
-        
-        <div class="vitals-section-title">生命体征</div>
-        
-        <div class="vital-card">
-          <div class="vital-label">血氧饱和度 SpO₂</div>
-          <div class="vital-value-container">
-            <div class="vital-value" id="spo2Val">--</div>
-            <div class="vital-unit">%</div>
+    <main id="emotionApp" class="emotional-layout">
+      <section class="emotion-main">
+        <div class="eeg-panel">
+          <div class="eeg-header">
+            <h2>24 通道脑电波 (模拟)</h2>
+            <span style="font-size: 12px; opacity: 0.7;">{{ statusText }}</span>
           </div>
-          <div class="vital-range">正常: 95-100%</div>
-          <div id="spo2Badge" class="vital-badge vital-badge-ok">正常</div>
-        </div>
-
-        <div class="vital-card">
-          <div class="vital-label">血压 (收缩压/舒张压)</div>
-          <div class="vital-value-container">
-            <div class="vital-value" id="bpVal">--/--</div>
-            <div class="vital-unit">mmHg</div>
+          <div class="eeg-channels" ref="channelsContainer">
+            <div class="channel" v-for="name in channelNames" :key="name">
+              <div class="channel__name">{{ name }}</div>
+              <canvas class="channel__canvas" :data-channel="name"></canvas>
+            </div>
           </div>
-          <div class="vital-range">正常: 90-120 / 60-80</div>
-          <div id="bpBadge" class="vital-badge vital-badge-ok">正常</div>
-        </div>
-
-        <div class="vital-card">
-          <div class="vital-label">心率 Heart Rate</div>
-          <div class="vital-value-container">
-            <div class="vital-value" id="hrVal">--</div>
-            <div class="vital-unit">bpm</div>
-          </div>
-          <div class="vital-range">正常: 60-100</div>
-          <div id="hrBadge" class="vital-badge vital-badge-ok">正常</div>
-        </div>
-      </div>
-
-      <div class="emotion-sidebar">
-        <div id="emotionState" class="emotion-state emotion-neutral">
-          <h3>检测中...</h3>
-          <p>初始化模拟数据</p>
-        </div>
-
-        <div class="stats-row">
-          <div class="stat-item">
-            <div class="stat-label">Alpha (μV)</div>
-            <div class="stat-value" id="alphaVal">—</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-label">Beta (μV)</div>
-            <div class="stat-value" id="betaVal">—</div>
-          </div>
-        </div>
-
-        <div class="stats-row">
-          <div class="stat-item">
-            <div class="stat-label">Theta (μV)</div>
-            <div class="stat-value" id="thetaVal">—</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-label">Delta (μV)</div>
-            <div class="stat-value" id="deltaVal">—</div>
-          </div>
-        </div>
-
-        <div id="medicalInfo" class="medical-info show">
-          <!-- Dynamic content -->
         </div>
 
         <div class="btn-group">
-          <button id="btnStart" class="btn btn--primary" type="button">开始</button>
-          <button id="btnStop" class="btn" type="button">停止</button>
+          <button class="btn btn--primary" type="button" @click="start" :disabled="running">开始</button>
+          <button class="btn" type="button" @click="stop" :disabled="!running">停止</button>
         </div>
-      </div>
+
+        <vital-signs-panel :vitals="vitals" :badges="vitalBadges"></vital-signs-panel>
+
+      </section>
+
+      <aside class="emotion-sidebar">
+        <div :class="['emotion-state', currentEmotionData.class]">
+          <h3>{{ currentEmotionData.emoji }} {{ currentEmotionData.name }}</h3>
+          <p>{{ currentEmotionData.description }}</p>
+        </div>
+
+        <smart-home-panel
+          :strategy="environmentStrategy"
+          :view="environmentView"
+          :animating="environmentAnimating"
+        ></smart-home-panel>
+
+        <div class="stats-row">
+          <div class="stat-item">
+            <div class="stat-left">
+              <div class="stat-label">Alpha (μV)</div>
+              <div class="stat-value">{{ bandPowers.alpha.toFixed(1) }}</div>
+            </div>
+            <svg class="stat-spark stat-spark--alpha" viewBox="0 0 96 28" aria-hidden="true">
+              <polyline points="2,20 12,16 22,18 32,10 42,12 52,7 62,11 72,6 82,10 94,8"></polyline>
+            </svg>
+          </div>
+
+          <div class="stat-item">
+            <div class="stat-left">
+              <div class="stat-label">Beta (μV)</div>
+              <div class="stat-value">{{ bandPowers.beta.toFixed(1) }}</div>
+            </div>
+            <svg class="stat-spark stat-spark--beta" viewBox="0 0 96 28" aria-hidden="true">
+              <polyline points="2,19 12,9 22,20 32,8 42,19 52,9 62,18 72,7 82,17 94,10"></polyline>
+            </svg>
+          </div>
+
+          <div class="stat-item">
+            <div class="stat-left">
+              <div class="stat-label">Theta (μV)</div>
+              <div class="stat-value">{{ bandPowers.theta.toFixed(1) }}</div>
+            </div>
+            <svg class="stat-spark stat-spark--theta" viewBox="0 0 96 28" aria-hidden="true">
+              <polyline points="2,18 12,15 22,9 32,7 42,11 52,14 62,8 72,6 82,12 94,10"></polyline>
+            </svg>
+          </div>
+
+          <div class="stat-item">
+            <div class="stat-left">
+              <div class="stat-label">Delta (μV)</div>
+              <div class="stat-value">{{ bandPowers.delta.toFixed(1) }}</div>
+            </div>
+            <svg class="stat-spark stat-spark--delta" viewBox="0 0 96 28" aria-hidden="true">
+              <polyline points="2,17 12,13 22,15 32,11 42,14 52,12 62,10 72,13 82,11 94,9"></polyline>
+            </svg>
+          </div>
+        </div>
+
+        <div class="medical-info show">
+          <h4>{{ currentEmotionData.medical.title }}</h4>
+          <p style="margin: 6px 0;">{{ currentEmotionData.medical.description }}</p>
+          <ul>
+            <li v-for="point in currentEmotionData.medical.points" :key="point">{{ point }}</li>
+          </ul>
+        </div>
+      </aside>
     </main>
 
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
     <script src="../assets/js/emotional.js"></script>
   </body>
 </html>

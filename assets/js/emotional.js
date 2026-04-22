@@ -1,23 +1,55 @@
 (() => {
-  // 24通道EEG位置（10-20/10-10系统扩展）
+  const { createApp } = Vue;
+
   const CHANNEL_NAMES = [
-    // 额叶 + 额中
     'Fp1', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8',
-    // 中央 + 颞区
     'T7', 'C3', 'Cz', 'C4', 'T8',
-    // 顶叶
     'P7', 'P3', 'Pz', 'P4', 'P8',
-    // 枕叶
     'O1', 'Oz', 'O2',
-    // 额中央/中央顶区补充
     'FC5', 'FC6', 'CP5', 'CP6'
   ];
+
+  const APP_CONFIG = {
+    eeg: {
+      sampleRate: 250,
+      bufferSize: 4096,
+      frameSamples: 3,
+      emotionIntervalFrames: 90,
+      vitalsIntervalFrames: 60
+    },
+    vitals: {
+      spo2: { min: 92, max: 100, initial: 98, normalLow: 95 },
+      hr: { min: 50, max: 110, initial: 78, normalLow: 60, normalHigh: 100 }
+    },
+    environment: {
+      stateMap: {
+        calm: '清醒',
+        neutral: '清醒',
+        anxious: '疲劳',
+        stressed: '疲劳'
+      },
+      presets: {
+        清醒: {
+          light: { from: 80, to: 100 },
+          temp: { from: 26, to: 24 },
+          message: '环境已优化：提升专注力'
+        },
+        疲劳: {
+          light: { from: 80, to: 40 },
+          temp: { from: 24, to: 27 },
+          message: '环境已调整：进入放松模式'
+        }
+      },
+      transitionMs: 780
+    }
+  };
 
   const EMOTION_STATES = {
     calm: {
       name: '放松 / 平静',
       class: 'emotion-calm',
       emoji: '😌',
+      description: '状态稳定，建议保持当前任务节奏。',
       medical: {
         title: '医学说明',
         description: '在放松或冥想状态下，脑电表现出如下特征：',
@@ -33,6 +65,7 @@
       name: '中性 / 清醒',
       class: 'emotion-neutral',
       emoji: '😐',
+      description: '认知负荷正常，注意力处于可用水平。',
       medical: {
         title: '医学说明',
         description: '在清醒、专注的正常状态下，脑电特征为：',
@@ -48,6 +81,7 @@
       name: '焦虑 / 紧张',
       class: 'emotion-anxious',
       emoji: '😰',
+      description: '系统检测到较高警觉，建议短时休息。',
       medical: {
         title: '医学说明',
         description: '在焦虑或紧张状态下，脑电出现以下特征：',
@@ -64,6 +98,7 @@
       name: '压力 / 疲劳',
       class: 'emotion-stressed',
       emoji: '😩',
+      description: '出现疲劳趋势，系统建议切换放松模式。',
       medical: {
         title: '医学说明',
         description: '在高压力或疲劳状态下，脑电表现：',
@@ -78,140 +113,6 @@
     }
   };
 
-  // 状态管理
-  const state = {
-    running: false,
-    channels: new Map(),
-    emotionHistory: [],
-    bandPowers: { alpha: 0, beta: 0, theta: 0, delta: 0 },
-    currentEmotion: 'neutral',
-    sampleRate: 250, // Hz
-    bufferSize: 4096, // 样本数 - 大幅延长波形显示
-    t: 0,
-    // 生命体征数据
-    vitals: {
-      spo2: 98,
-      sys: 112,
-      dia: 72,
-      hr: 78,
-      lastVitalsUpdate: 0
-    }
-  };
-
-  // UI 元素
-  const el = {
-    channels: document.getElementById('channels'),
-    emotionState: document.getElementById('emotionState'),
-    medicalInfo: document.getElementById('medicalInfo'),
-    alphaVal: document.getElementById('alphaVal'),
-    betaVal: document.getElementById('betaVal'),
-    thetaVal: document.getElementById('thetaVal'),
-    deltaVal: document.getElementById('deltaVal'),
-    status: document.getElementById('status'),
-    btnStart: document.getElementById('btnStart'),
-    btnStop: document.getElementById('btnStop'),
-    // 生命体征
-    spo2Val: document.getElementById('spo2Val'),
-    bpVal: document.getElementById('bpVal'),
-    hrVal: document.getElementById('hrVal'),
-    spo2Badge: document.getElementById('spo2Badge'),
-    bpBadge: document.getElementById('bpBadge'),
-    hrBadge: document.getElementById('hrBadge')
-  };
-
-  // 初始化通道 - 使用 canvas 绘制波形
-  function initChannels() {
-    el.channels.innerHTML = '';
-    state.channels.clear();
-
-    // 获取容器宽度用于计算canvas宽度
-    const containerWidth = el.channels.clientWidth;
-    // 预留标签宽度(38px) + 间距(6px) + padding(12px) + 滚动条(8px) = 64px
-    const canvasWidth = Math.max(220, containerWidth - 64);
-
-    for (const name of CHANNEL_NAMES) {
-      const container = document.createElement('div');
-      container.className = 'channel';
-
-      const nameEl = document.createElement('div');
-      nameEl.className = 'channel__name';
-      nameEl.textContent = name;
-
-      const canvas = document.createElement('canvas');
-      canvas.className = 'channel__canvas';
-      canvas.width = canvasWidth;
-      canvas.height = 34;
-
-      container.appendChild(nameEl);
-      container.appendChild(canvas);
-
-      el.channels.appendChild(container);
-
-      // 初始化该通道的缓冲区 - 使用更大的缓冲区以显示更长的波形
-      const buffer = new Float32Array(state.bufferSize);
-      for (let i = 0; i < buffer.length; i++) {
-        buffer[i] = 0;
-      }
-
-      state.channels.set(name, {
-        container,
-        canvas,
-        ctx: canvas.getContext('2d'),
-        buffer,
-        writePtr: 0,
-        currentValue: 0
-      });
-    }
-  }
-
-  // 绘制单个通道波形
-  function drawChannelWaveform(channelData) {
-    const { canvas, ctx, buffer, writePtr } = channelData;
-
-    const w = canvas.width;
-    const h = canvas.height;
-    const centerY = h / 2;
-
-    // 清空
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-    ctx.fillRect(0, 0, w, h);
-
-    // 绘制中轴线
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-    ctx.lineWidth = 0.5;
-    ctx.beginPath();
-    ctx.moveTo(0, centerY);
-    ctx.lineTo(w, centerY);
-    ctx.stroke();
-
-    // 绘制波形
-    ctx.strokeStyle = '#6ff0c1';
-    ctx.lineWidth = 1.8;
-    ctx.beginPath();
-
-    // 从缓冲区绘制波形 (从最旧到最新)
-    const step = Math.max(1, Math.floor(buffer.length / w));
-    let first = true;
-
-    for (let i = 0; i < w; i++) {
-      const bufIdx = (writePtr + i * step) % buffer.length;
-      const val = buffer[bufIdx];
-      // 略微增强振幅，使波形更清晰
-      const amplitude = centerY - 1.5;
-      const y = centerY - (val / 24) * amplitude;
-      const x = i;
-
-      if (first) {
-        ctx.moveTo(x, Math.max(2, Math.min(h - 2, y)));
-        first = false;
-      } else {
-        ctx.lineTo(x, Math.max(2, Math.min(h - 2, y)));
-      }
-    }
-    ctx.stroke();
-  }
-
-  // ========== 生命体征相关函数 ==========
   function clamp(val, min, max) {
     return Math.max(min, Math.min(max, val));
   }
@@ -221,265 +122,474 @@
     return clamp(current + delta, min, max);
   }
 
-  function updateVitals() {
-    // 每隔大约0.5秒更新一次活力值
-    state.vitals.spo2 = stepValue(state.vitals.spo2, 92, 100);
-    state.vitals.sys = stepValue(state.vitals.sys, 100, 135);
-    state.vitals.dia = stepValue(state.vitals.dia, 60, 90);
-    state.vitals.hr = stepValue(state.vitals.hr, 50, 110);
-
-    // 更新UI
-    el.spo2Val.textContent = state.vitals.spo2;
-    el.bpVal.textContent = `${state.vitals.sys}/${state.vitals.dia}`;
-    el.hrVal.textContent = state.vitals.hr;
-
-    // 评估状态并更新badge
-    evaluateAndUpdateVitalsBadges();
-  }
-
-  function evaluateSpO2(spo2) {
-    if (spo2 >= 95) return { label: '正常', class: 'vital-badge-ok' };
-    if (spo2 >= 90) return { label: '偏低', class: 'vital-badge-warn' };
-    return { label: '低氧', class: 'vital-badge-alert' };
-  }
-
-  function evaluateBP(sys, dia) {
-    if (sys < 90 || dia < 60) return { label: '偏低', class: 'vital-badge-warn' };
-    if (sys <= 120 && dia <= 80) return { label: '正常', class: 'vital-badge-ok' };
-    if (sys <= 139 || dia <= 89) return { label: '偏高', class: 'vital-badge-warn' };
-    return { label: '高血压', class: 'vital-badge-alert' };
-  }
-
-  function evaluateHR(hr) {
-    if (hr < 60) return { label: '偏慢', class: 'vital-badge-warn' };
-    if (hr <= 100) return { label: '正常', class: 'vital-badge-ok' };
-    return { label: '偏快', class: 'vital-badge-warn' };
-  }
-
-  function evaluateAndUpdateVitalsBadges() {
-    const spo2Eval = evaluateSpO2(state.vitals.spo2);
-    const bpEval = evaluateBP(state.vitals.sys, state.vitals.dia);
-    const hrEval = evaluateHR(state.vitals.hr);
-
-    // 更新badge
-    el.spo2Badge.className = `vital-badge ${spo2Eval.class}`;
-    el.spo2Badge.textContent = spo2Eval.label;
-
-    el.bpBadge.className = `vital-badge ${bpEval.class}`;
-    el.bpBadge.textContent = bpEval.label;
-
-    el.hrBadge.className = `vital-badge ${hrEval.class}`;
-    el.hrBadge.textContent = hrEval.label;
-  }
-
-  // 模拟多通道 EEG 数据
-  function generateChannelAmplitude(channelName, baseAmp, theta, alpha, beta, delta) {
-    // 不同脑区对不同频率波的响应差异加大
-    let signal = 0;
-
-    if (channelName.includes('p') || channelName.includes('P')) {
-      // Parietal/Posterior: Alpha主导（高响应）
-      signal = alpha * 1.2 + beta * 0.15 + theta * 0.1 + delta * 0.05;
-    } else if (channelName.includes('f') || channelName.includes('F')) {
-      // Frontal: Beta主导（高响应）
-      signal = beta * 1.3 + alpha * 0.2 + theta * 0.4 + delta * 0.1;
-    } else if (channelName.includes('c') || channelName.includes('C') || channelName.includes('z')) {
-      // Central: Theta主导（中等响应）
-      signal = theta * 0.8 + beta * 0.5 + alpha * 0.4 + delta * 0.2;
-    } else if (channelName.includes('t') || channelName.includes('T')) {
-      // Temporal: Delta/Theta混合
-      signal = delta * 0.7 + theta * 0.7 + beta * 0.3 + alpha * 0.3;
-    } else if (channelName.includes('o') || channelName.includes('O')) {
-      // Occipital: Alpha极度主导
-      signal = alpha * 1.5 + beta * 0.1 + theta * 0.1 + delta * 0.05;
-    }
-
-    // 增加噪声幅度与通道特异性调制
-    const noise = (Math.random() - 0.5) * 5.5;
-    const channelModulation = Math.sin(state.t * (10 + Math.abs(Math.random() * 20))) * 0.3;
-    return signal + noise + channelModulation;
-  }
-
-  let smoothAlpha = 20;
-  let smoothBeta = 15;
-  let smoothTheta = 10;
-  let smoothDelta = 5;
-  let updateCounter = 0;
-
-  function updateEEG() {
-    if (!state.running) return;
-
-    // 每个样本间隔时间 (ms)
-    const sampleInterval = 1000 / state.sampleRate;
-
-    // 加速更新速度：每帧更新3个样本，提升3倍波形显示速度
-    const updateInterval = 3;
-
-    for (let frame = 0; frame < updateInterval; frame++) {
-      state.t += sampleInterval / 1000; // 转换为秒
-
-      // 根据当前情感状态模拟不同的频率分布
-      const emotionProfile = {
-        calm: { alpha: 25, beta: 12, theta: 10, delta: 5 },
-        neutral: { alpha: 15, beta: 20, theta: 8, delta: 5 },
-        anxious: { alpha: 8, beta: 28, theta: 12, delta: 6 },
-        stressed: { alpha: 5, beta: 15, theta: 25, delta: 10 }
-      };
-
-      const currentProfile = emotionProfile[state.currentEmotion];
-
-      // 使用高频率振荡 (4Hz) 实现快速变化
-      const slowMod = 0.7 + 0.3 * Math.sin(state.t * Math.PI * 4);
-
-      // 频率成分（大幅加速）
-      const theta = currentProfile.theta * slowMod * (0.7 + 0.3 * Math.sin(state.t * 30));
-      const alpha = currentProfile.alpha * slowMod * (0.6 + 0.4 * Math.cos(state.t * 45));
-      const beta = currentProfile.beta * slowMod * (0.5 + 0.5 * Math.sin(state.t * 80));
-      const delta = currentProfile.delta * slowMod * (0.8 + 0.2 * Math.sin(state.t * 15));
-
-      // 平滑更新 - 更快速响应
-      smoothAlpha = smoothAlpha * 0.75 + alpha * 0.25;
-      smoothBeta = smoothBeta * 0.75 + beta * 0.25;
-      smoothTheta = smoothTheta * 0.75 + theta * 0.25;
-      smoothDelta = smoothDelta * 0.75 + delta * 0.25;
-
-      // 更新所有通道样本
-      for (const [name, channel] of state.channels) {
-        const sample = generateChannelAmplitude(name, 10, smoothTheta, smoothAlpha, smoothBeta, smoothDelta);
-        
-        // 添加到缓冲区
-        channel.buffer[channel.writePtr] = sample;
-        channel.writePtr = (channel.writePtr + 1) % state.bufferSize;
-        channel.currentValue = sample;
-      }
-    }
-
-    // 保存频率功率
-    state.bandPowers = {
-      alpha: Math.round(smoothAlpha * 10) / 10,
-      beta: Math.round(smoothBeta * 10) / 10,
-      theta: Math.round(smoothTheta * 10) / 10,
-      delta: Math.round(smoothDelta * 10) / 10
+  function getEnvironmentStrategy(state, config = APP_CONFIG.environment) {
+    const preset = config.presets[state] || config.presets['清醒'];
+    return {
+      state,
+      light: { ...preset.light },
+      temp: { ...preset.temp },
+      message: preset.message
     };
-
-    // 更新所有通道的画布
-    for (const [name, channel] of state.channels) {
-      drawChannelWaveform(channel);
-    }
-
-    // 更新统计信息
-    el.alphaVal.textContent = state.bandPowers.alpha.toFixed(1);
-    el.betaVal.textContent = state.bandPowers.beta.toFixed(1);
-    el.thetaVal.textContent = state.bandPowers.theta.toFixed(1);
-    el.deltaVal.textContent = state.bandPowers.delta.toFixed(1);
-
-    // 每隔约 1 秒更新一次生命体征数据
-    updateCounter++;
-    if (updateCounter % 60 === 0) {
-      updateVitals();
-    }
-
-    // 每隔 1.5 秒判定情感状态（加速判定）
-    if (updateCounter % 90 === 0) {
-      classifyEmotion();
-    }
-
-    requestAnimationFrame(updateEEG);
   }
 
-  // 情感分类算法 - 降低非健康情感状态的概率
-  function classifyEmotion() {
-    const { alpha, beta, theta, delta } = state.bandPowers;
+  window.getEnvironmentStrategy = getEnvironmentStrategy;
 
-    let emotion = 'neutral';
-
-    // 放松: Alpha 高，Beta 低 - 提高倾向，加偏移量
-    const calmScore = alpha * 2.0 - beta * 0.4 + 8;
-
-    // 焦虑: Beta 高，Alpha 低 - 提高阈值，降低倾向
-    const anxiousScore = beta * 2.2 - alpha * 0.8 - theta * 0.4 - 5;
-
-    // 压力/疲劳: Theta 高，Alpha 低 - 提高阈值，降低倾向
-    const stressedScore = theta * 1.9 + delta * 0.9 - alpha * 0.7 - 5;
-
-    // 判定主要情感 - 加大阈值差距，优先健康状态
-    if (calmScore > 18 && calmScore > anxiousScore + 3 && calmScore > stressedScore + 3) {
-      emotion = 'calm';
-    } else if (anxiousScore > 25 && anxiousScore > stressedScore + 2) {
-      emotion = 'anxious';
-    } else if (stressedScore > 20) {
-      emotion = 'stressed';
-    } else {
-      emotion = 'neutral';
-    }
-
-    // 只有当新情感不同时才更新UI
-    if (emotion !== state.currentEmotion) {
-      state.currentEmotion = emotion;
-      updateEmotionDisplay();
-    }
-  }
-
-  // 更新情感显示
-  function updateEmotionDisplay() {
-    const emotionData = EMOTION_STATES[state.currentEmotion];
-
-    el.emotionState.className = 'emotion-state ' + emotionData.class;
-    el.emotionState.innerHTML = `
-      <h3>${emotionData.emoji} ${emotionData.name}</h3>
-      <p id="confidence" style="margin-top: 4px; font-size: 12px; opacity: 0.7;">置信度: --</p>
-    `;
-
-    // 医学说明
-    el.medicalInfo.innerHTML = `
-      <h4>${emotionData.medical.title}</h4>
-      <p style="margin: 6px 0;">${emotionData.medical.description}</p>
-      <ul>
-        ${emotionData.medical.points.map(p => `<li>${p}</li>`).join('')}
-      </ul>
-    `;
-  }
-
-  // 开始/停止
-  function start() {
-    state.running = true;
-    el.btnStart.disabled = true;
-    el.btnStop.disabled = false;
-    el.status.textContent = '运行中...';
-    updateCounter = 0;
-    updateEEG();
-  }
-
-  function stop() {
-    state.running = false;
-    el.btnStart.disabled = false;
-    el.btnStop.disabled = true;
-    el.status.textContent = '已停止';
-  }
-
-  // 处理窗口resize事件
-  let resizeTimeout;
-  window.addEventListener('resize', () => {
-    clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(() => {
-      if (state.running) {
-        // 如果正在运行，重新初始化以适应新的窗口大小
-        initChannels();
+  const VitalRingGauge = {
+    props: {
+      value: { type: Number, required: true },
+      min: { type: Number, required: true },
+      max: { type: Number, required: true },
+      unit: { type: String, required: true }
+    },
+    computed: {
+      normalizedPercent() {
+        const span = Math.max(1, this.max - this.min);
+        const bounded = clamp(this.value, this.min, this.max);
+        return Math.round(((bounded - this.min) / span) * 100);
+      },
+      radius() {
+        return 36;
+      },
+      circumference() {
+        return 2 * Math.PI * this.radius;
+      },
+      dashOffset() {
+        return this.circumference * (1 - this.normalizedPercent / 100);
       }
-    }, 500);
-  });
+    },
+    template: `
+      <div class="vital-ring-wrap" role="img" :aria-label="'当前值 ' + value + unit">
+        <svg class="vital-ring" viewBox="0 0 88 88" aria-hidden="true">
+          <circle class="vital-ring-bg" cx="44" cy="44" :r="radius"></circle>
+          <circle
+            class="vital-ring-fg"
+            cx="44"
+            cy="44"
+            :r="radius"
+            :stroke-dasharray="circumference"
+            :stroke-dashoffset="dashOffset"
+          ></circle>
+        </svg>
+        <div class="vital-ring-center">
+          <div class="vital-ring-center-number">{{ normalizedPercent }}%</div>
+          <div class="vital-ring-center-unit">进度</div>
+        </div>
+      </div>
+    `
+  };
 
-  // 绑定事件
-  el.btnStart.addEventListener('click', start);
-  el.btnStop.addEventListener('click', stop);
+  const VitalPhotoCard = {
+    template: `
+      <article class="vital-panel-card vital-photo-card">
+        <div class="vital-photo-media">
+          <img src="../assets/pages/health.png" alt="用户实时监测与脑电采集" />
+          <div class="vital-photo-overlay"></div>
+        </div>
+        <div class="vital-photo-copy">
+          <h3 class="vital-photo-title">用户实时监测</h3>
+          <p class="vital-photo-subtitle">脑电信号采集与分析中</p>
+        </div>
+      </article>
+    `
+  };
 
-  // 初始化
-  initChannels();
-  updateEmotionDisplay();
-  evaluateAndUpdateVitalsBadges();
-  // 初始显示生命体征
-  el.spo2Val.textContent = state.vitals.spo2;
-  el.bpVal.textContent = `${state.vitals.sys}/${state.vitals.dia}`;
-  el.hrVal.textContent = state.vitals.hr;
-  el.btnStop.disabled = true;
+  const VitalMetricCard = {
+    components: {
+      VitalRingGauge
+    },
+    props: {
+      title: { type: String, required: true },
+      value: { type: Number, required: true },
+      unit: { type: String, required: true },
+      range: { type: String, required: true },
+      badge: { type: Object, required: true },
+      gaugeMin: { type: Number, required: true },
+      gaugeMax: { type: Number, required: true }
+    },
+    template: `
+      <article class="vital-panel-card vital-metric-card">
+        <div>
+          <h3 class="vital-metric-label">{{ title }}</h3>
+          <div class="vital-metric-value">
+            <div class="vital-metric-value-number">{{ value }}</div>
+            <div class="vital-metric-unit">{{ unit }}</div>
+          </div>
+          <div class="vital-metric-range">{{ range }}</div>
+          <div :class="['vital-badge', badge.class]">{{ badge.label }}</div>
+        </div>
+        <vital-ring-gauge :value="value" :unit="unit" :min="gaugeMin" :max="gaugeMax"></vital-ring-gauge>
+      </article>
+    `
+  };
+
+  const VitalSignsPanel = {
+    components: {
+      VitalPhotoCard,
+      VitalMetricCard
+    },
+    props: {
+      vitals: { type: Object, required: true },
+      badges: { type: Object, required: true }
+    },
+    template: `
+      <section class="vital-signs-panel">
+        <div class="vitals-section-title">生命体征</div>
+        <div class="vital-signs-grid">
+          <vital-photo-card></vital-photo-card>
+          <vital-metric-card
+            title="血氧饱和度 SpO₂"
+            :value="vitals.spo2"
+            unit="%"
+            range="正常: 95 - 100%"
+            :badge="badges.spo2"
+            :gauge-min="90"
+            :gauge-max="100"
+          ></vital-metric-card>
+          <vital-metric-card
+            title="心率 Heart Rate"
+            :value="vitals.hr"
+            unit="bpm"
+            range="正常: 60 - 100"
+            :badge="badges.hr"
+            :gauge-min="50"
+            :gauge-max="110"
+          ></vital-metric-card>
+        </div>
+      </section>
+    `
+  };
+
+  createApp({
+    components: {
+      VitalSignsPanel,
+      SmartHomePanel: {
+        props: {
+          strategy: { type: Object, required: true },
+          view: { type: Object, required: true },
+          animating: { type: Boolean, required: true }
+        },
+        template: `
+          <div class="smart-home-card" :class="{ 'fade-pulse': animating }">
+            <h3 class="smart-home-title">智能家居联动控制</h3>
+            <div class="smart-home-state">当前策略状态：{{ strategy.state }}</div>
+            <div class="env-rows">
+              <div class="env-row">
+                <div>💡 灯光亮度</div>
+                <div class="env-value">{{ view.lightFrom }}% → {{ view.lightTo }}%</div>
+              </div>
+              <div class="env-row">
+                <div>❄️ 空调温度</div>
+                <div class="env-value">{{ view.tempFrom }}℃ → {{ view.tempTo }}℃</div>
+              </div>
+            </div>
+            <div class="env-message">提示：{{ view.message }}</div>
+          </div>
+        `
+      }
+    },
+    data() {
+      return {
+        channelNames: CHANNEL_NAMES,
+        running: false,
+        statusText: '准备就绪',
+        currentEmotion: 'neutral',
+        bandPowers: { alpha: 20, beta: 15, theta: 10, delta: 5 },
+        vitals: {
+          spo2: APP_CONFIG.vitals.spo2.initial,
+          hr: APP_CONFIG.vitals.hr.initial
+        },
+        vitalBadges: {
+          spo2: { label: '正常', class: 'vital-badge-ok' },
+          hr: { label: '正常', class: 'vital-badge-ok' }
+        },
+        environmentStrategy: getEnvironmentStrategy('清醒'),
+        environmentView: {
+          lightFrom: 80,
+          lightTo: 100,
+          tempFrom: 26,
+          tempTo: 24,
+          message: '环境已优化：提升专注力'
+        },
+        environmentAnimating: false,
+        eegState: {
+          sampleRate: APP_CONFIG.eeg.sampleRate,
+          bufferSize: APP_CONFIG.eeg.bufferSize,
+          t: 0,
+          channels: new Map(),
+          updateCounter: 0,
+          smoothAlpha: 20,
+          smoothBeta: 15,
+          smoothTheta: 10,
+          smoothDelta: 5,
+          rafId: null
+        },
+        resizeTimer: null
+      };
+    },
+    computed: {
+      currentEmotionData() {
+        return EMOTION_STATES[this.currentEmotion] || EMOTION_STATES.neutral;
+      }
+    },
+    methods: {
+      initChannels() {
+        const container = this.$refs.channelsContainer;
+        if (!container) return;
+
+        const containerWidth = container.clientWidth;
+        const canvasWidth = Math.max(220, containerWidth - 64);
+        this.eegState.channels.clear();
+
+        const canvases = container.querySelectorAll('canvas.channel__canvas');
+        canvases.forEach((canvas) => {
+          const name = canvas.dataset.channel;
+          canvas.width = canvasWidth;
+          canvas.height = 34;
+          const buffer = new Float32Array(this.eegState.bufferSize);
+          this.eegState.channels.set(name, {
+            canvas,
+            ctx: canvas.getContext('2d'),
+            buffer,
+            writePtr: 0
+          });
+        });
+      },
+      drawChannelWaveform(channelData) {
+        const { canvas, ctx, buffer, writePtr } = channelData;
+        const w = canvas.width;
+        const h = canvas.height;
+        const centerY = h / 2;
+
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+        ctx.fillRect(0, 0, w, h);
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
+        ctx.lineWidth = 0.5;
+        ctx.beginPath();
+        ctx.moveTo(0, centerY);
+        ctx.lineTo(w, centerY);
+        ctx.stroke();
+
+        ctx.strokeStyle = '#6ff0c1';
+        ctx.lineWidth = 1.8;
+        ctx.beginPath();
+
+        const step = Math.max(1, Math.floor(buffer.length / w));
+        let first = true;
+        for (let i = 0; i < w; i++) {
+          const bufIdx = (writePtr + i * step) % buffer.length;
+          const val = buffer[bufIdx];
+          const y = centerY - (val / 24) * (centerY - 1.5);
+          const clampedY = Math.max(2, Math.min(h - 2, y));
+          if (first) {
+            ctx.moveTo(i, clampedY);
+            first = false;
+          } else {
+            ctx.lineTo(i, clampedY);
+          }
+        }
+        ctx.stroke();
+      },
+      generateChannelAmplitude(channelName, theta, alpha, beta, delta) {
+        let signal = 0;
+        if (channelName.includes('p') || channelName.includes('P')) {
+          signal = alpha * 1.2 + beta * 0.15 + theta * 0.1 + delta * 0.05;
+        } else if (channelName.includes('f') || channelName.includes('F')) {
+          signal = beta * 1.3 + alpha * 0.2 + theta * 0.4 + delta * 0.1;
+        } else if (channelName.includes('c') || channelName.includes('C') || channelName.includes('z')) {
+          signal = theta * 0.8 + beta * 0.5 + alpha * 0.4 + delta * 0.2;
+        } else if (channelName.includes('t') || channelName.includes('T')) {
+          signal = delta * 0.7 + theta * 0.7 + beta * 0.3 + alpha * 0.3;
+        } else if (channelName.includes('o') || channelName.includes('O')) {
+          signal = alpha * 1.5 + beta * 0.1 + theta * 0.1 + delta * 0.05;
+        }
+        const noise = (Math.random() - 0.5) * 5.5;
+        const mod = Math.sin(this.eegState.t * (10 + Math.abs(Math.random() * 20))) * 0.3;
+        return signal + noise + mod;
+      },
+      updateVitals() {
+        const { spo2, hr } = APP_CONFIG.vitals;
+        this.vitals.spo2 = stepValue(this.vitals.spo2, spo2.min, spo2.max);
+        this.vitals.hr = stepValue(this.vitals.hr, hr.min, hr.max);
+        this.vitalBadges.spo2 = this.evaluateSpO2(this.vitals.spo2);
+        this.vitalBadges.hr = this.evaluateHR(this.vitals.hr);
+      },
+      evaluateSpO2(value) {
+        if (value >= APP_CONFIG.vitals.spo2.normalLow) {
+          return { label: '正常', class: 'vital-badge-ok' };
+        }
+        if (value >= 90) {
+          return { label: '偏低', class: 'vital-badge-warn' };
+        }
+        return { label: '低氧', class: 'vital-badge-alert' };
+      },
+      evaluateHR(value) {
+        const range = APP_CONFIG.vitals.hr;
+        if (value < range.normalLow) return { label: '偏慢', class: 'vital-badge-warn' };
+        if (value <= range.normalHigh) return { label: '正常', class: 'vital-badge-ok' };
+        return { label: '偏快', class: 'vital-badge-warn' };
+      },
+      classifyEmotion() {
+        const { alpha, beta, theta, delta } = this.bandPowers;
+        const calmScore = alpha * 2.0 - beta * 0.4 + 8;
+        const anxiousScore = beta * 2.2 - alpha * 0.8 - theta * 0.4 - 5;
+        const stressedScore = theta * 1.9 + delta * 0.9 - alpha * 0.7 - 5;
+
+        let emotion = 'neutral';
+        if (calmScore > 18 && calmScore > anxiousScore + 3 && calmScore > stressedScore + 3) {
+          emotion = 'calm';
+        } else if (anxiousScore > 25 && anxiousScore > stressedScore + 2) {
+          emotion = 'anxious';
+        } else if (stressedScore > 20) {
+          emotion = 'stressed';
+        }
+
+        if (emotion !== this.currentEmotion) {
+          this.currentEmotion = emotion;
+          this.applyEnvironmentByEmotion(emotion);
+        }
+      },
+      applyEnvironmentByEmotion(emotion) {
+        const mappedState = APP_CONFIG.environment.stateMap[emotion] || '清醒';
+        const strategy = getEnvironmentStrategy(mappedState, APP_CONFIG.environment);
+        this.environmentStrategy = strategy;
+        this.animateEnvironment(strategy);
+      },
+      animateEnvironment(strategy) {
+        this.environmentAnimating = true;
+
+        const from = {
+          lightFrom: this.environmentView.lightFrom,
+          lightTo: this.environmentView.lightTo,
+          tempFrom: this.environmentView.tempFrom,
+          tempTo: this.environmentView.tempTo
+        };
+        const to = {
+          lightFrom: strategy.light.from,
+          lightTo: strategy.light.to,
+          tempFrom: strategy.temp.from,
+          tempTo: strategy.temp.to
+        };
+
+        const duration = APP_CONFIG.environment.transitionMs;
+        const start = performance.now();
+
+        const tick = (now) => {
+          const progress = clamp((now - start) / duration, 0, 1);
+          this.environmentView.lightFrom = Math.round(from.lightFrom + (to.lightFrom - from.lightFrom) * progress);
+          this.environmentView.lightTo = Math.round(from.lightTo + (to.lightTo - from.lightTo) * progress);
+          this.environmentView.tempFrom = Math.round(from.tempFrom + (to.tempFrom - from.tempFrom) * progress);
+          this.environmentView.tempTo = Math.round(from.tempTo + (to.tempTo - from.tempTo) * progress);
+
+          if (progress < 1) {
+            requestAnimationFrame(tick);
+          } else {
+            this.environmentView.message = strategy.message;
+            setTimeout(() => {
+              this.environmentAnimating = false;
+            }, 120);
+          }
+        };
+
+        this.environmentView.message = strategy.message;
+        requestAnimationFrame(tick);
+      },
+      updateEEG() {
+        if (!this.running) return;
+
+        const profileMap = {
+          calm: { alpha: 25, beta: 12, theta: 10, delta: 5 },
+          neutral: { alpha: 15, beta: 20, theta: 8, delta: 5 },
+          anxious: { alpha: 8, beta: 28, theta: 12, delta: 6 },
+          stressed: { alpha: 5, beta: 15, theta: 25, delta: 10 }
+        };
+
+        const interval = 1000 / this.eegState.sampleRate;
+
+        for (let frame = 0; frame < APP_CONFIG.eeg.frameSamples; frame++) {
+          this.eegState.t += interval / 1000;
+
+          const profile = profileMap[this.currentEmotion];
+          const slowMod = 0.7 + 0.3 * Math.sin(this.eegState.t * Math.PI * 4);
+          const theta = profile.theta * slowMod * (0.7 + 0.3 * Math.sin(this.eegState.t * 30));
+          const alpha = profile.alpha * slowMod * (0.6 + 0.4 * Math.cos(this.eegState.t * 45));
+          const beta = profile.beta * slowMod * (0.5 + 0.5 * Math.sin(this.eegState.t * 80));
+          const delta = profile.delta * slowMod * (0.8 + 0.2 * Math.sin(this.eegState.t * 15));
+
+          this.eegState.smoothAlpha = this.eegState.smoothAlpha * 0.75 + alpha * 0.25;
+          this.eegState.smoothBeta = this.eegState.smoothBeta * 0.75 + beta * 0.25;
+          this.eegState.smoothTheta = this.eegState.smoothTheta * 0.75 + theta * 0.25;
+          this.eegState.smoothDelta = this.eegState.smoothDelta * 0.75 + delta * 0.25;
+
+          for (const [name, channel] of this.eegState.channels) {
+            const sample = this.generateChannelAmplitude(
+              name,
+              this.eegState.smoothTheta,
+              this.eegState.smoothAlpha,
+              this.eegState.smoothBeta,
+              this.eegState.smoothDelta
+            );
+            channel.buffer[channel.writePtr] = sample;
+            channel.writePtr = (channel.writePtr + 1) % this.eegState.bufferSize;
+          }
+        }
+
+        this.bandPowers = {
+          alpha: Math.round(this.eegState.smoothAlpha * 10) / 10,
+          beta: Math.round(this.eegState.smoothBeta * 10) / 10,
+          theta: Math.round(this.eegState.smoothTheta * 10) / 10,
+          delta: Math.round(this.eegState.smoothDelta * 10) / 10
+        };
+
+        for (const channel of this.eegState.channels.values()) {
+          this.drawChannelWaveform(channel);
+        }
+
+        this.eegState.updateCounter += 1;
+        if (this.eegState.updateCounter % APP_CONFIG.eeg.vitalsIntervalFrames === 0) {
+          this.updateVitals();
+        }
+        if (this.eegState.updateCounter % APP_CONFIG.eeg.emotionIntervalFrames === 0) {
+          this.classifyEmotion();
+        }
+
+        this.eegState.rafId = requestAnimationFrame(this.updateEEG);
+      },
+      start() {
+        if (this.running) return;
+        this.running = true;
+        this.statusText = '运行中...';
+        this.eegState.updateCounter = 0;
+        this.updateEEG();
+      },
+      stop() {
+        this.running = false;
+        this.statusText = '已停止';
+        if (this.eegState.rafId) {
+          cancelAnimationFrame(this.eegState.rafId);
+          this.eegState.rafId = null;
+        }
+      },
+      handleResize() {
+        clearTimeout(this.resizeTimer);
+        this.resizeTimer = setTimeout(() => {
+          this.initChannels();
+        }, 300);
+      }
+    },
+    mounted() {
+      this.$nextTick(() => {
+        this.initChannels();
+        this.vitalBadges.spo2 = this.evaluateSpO2(this.vitals.spo2);
+        this.vitalBadges.hr = this.evaluateHR(this.vitals.hr);
+        this.applyEnvironmentByEmotion(this.currentEmotion);
+      });
+      window.addEventListener('resize', this.handleResize);
+    },
+    beforeUnmount() {
+      this.stop();
+      window.removeEventListener('resize', this.handleResize);
+      clearTimeout(this.resizeTimer);
+    }
+  }).mount('#emotionApp');
 })();

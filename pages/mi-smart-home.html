@@ -6,289 +6,355 @@
     <title>运动想象按摩椅控制 · Motor Imagery Massage Chair</title>
     <link rel="stylesheet" href="../assets/css/styles.css" />
     <style>
+      :root {
+        --page-bg: #0a0f1c;
+        --card-bg: rgba(20, 30, 50, 0.6);
+        --card-border: rgba(96, 165, 250, 0.22);
+        --card-border-strong: rgba(96, 165, 250, 0.45);
+        --card-shadow: 0 16px 42px rgba(0, 0, 0, 0.35), 0 0 24px rgba(56, 189, 248, 0.1);
+        --radius-lg: 16px;
+        --radius-md: 12px;
+        --gap-xl: 20px;
+        --gap-md: 16px;
+        --gap-sm: 12px;
+      }
+
+      body {
+        background: radial-gradient(circle at 20% 0%, rgba(56, 189, 248, 0.08), transparent 40%),
+          radial-gradient(circle at 80% 10%, rgba(99, 102, 241, 0.1), transparent 34%),
+          var(--page-bg);
+      }
+
+      .mi-page {
+        max-width: 1560px;
+        margin: 0 auto;
+        padding: 12px 16px 14px;
+      }
+
       .mi-layout {
         display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-        padding: 6px 12px 12px 12px;
-        max-width: 1600px;
-        margin: 0 auto;
+        grid-template-columns: 3fr 2fr;
+        gap: 16px;
         align-items: start;
-        min-height: calc(100vh - 72px);
       }
 
-      @media (max-width: 1100px) {
-        .mi-layout {
-          grid-template-columns: 1fr;
-          gap: 8px;
-          padding: 4px 8px 8px 8px;
-        }
-      }
-
-      /* 左侧：按摩椅和交互部位 */
-      .mi-left {
+      .mi-main,
+      .mi-right {
         display: flex;
         flex-direction: column;
-        align-items: center;
-        gap: 8px;
+        gap: 16px;
+        min-width: 0;
       }
 
-      .chair-container {
-        position: relative;
-        width: 100%;
-        max-width: 702px;
-        height: 783px;
+      .panel-card {
+        background: var(--card-bg);
+        border: 1px solid var(--card-border);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--card-shadow);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+      }
+
+      .panel-card__head {
         display: flex;
         align-items: center;
-        justify-content: center;
-        margin-top: -180px;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+
+      .panel-title {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin: 0;
+        font-size: 18px;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+      }
+
+      .panel-subtitle {
+        margin: 0;
+        font-size: 12px;
+        opacity: 0.7;
+      }
+
+      .section-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        border: 1px solid rgba(96, 165, 250, 0.22);
+        background: rgba(15, 23, 42, 0.58);
+        color: #cbd5e1;
+        font-size: 12px;
+        white-space: nowrap;
+      }
+
+      .principle-card {
+        padding: 16px;
+      }
+
+      .principle-card__icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(145deg, rgba(56, 189, 248, 0.18), rgba(99, 102, 241, 0.16));
+        border: 1px solid rgba(125, 211, 252, 0.18);
+        box-shadow: 0 0 18px rgba(56, 189, 248, 0.14);
+        flex-shrink: 0;
+      }
+
+      .principle-card__icon svg {
+        width: 22px;
+        height: 22px;
+        fill: #dbeafe;
+      }
+
+      .principle-card__body {
+        display: grid;
+        gap: 8px;
+        font-size: 13px;
+        line-height: 1.6;
+        opacity: 0.9;
+      }
+
+      .mi-highlight {
+        color: #93c5fd;
+        font-weight: 600;
+      }
+
+      .chair-card {
+        padding: 16px;
+      }
+
+      .chair-stage {
+        position: relative;
+        width: 100%;
+        height: clamp(240px, 26vw, 310px);
+        border-radius: 16px;
+        overflow: hidden;
+        border: 1px solid rgba(96, 165, 250, 0.18);
+        background: linear-gradient(180deg, rgba(15, 23, 42, 0.85), rgba(2, 6, 23, 0.95));
+      }
+
+      .chair-stage::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(180deg, rgba(7, 12, 24, 0.08), rgba(7, 12, 24, 0.38)),
+          radial-gradient(circle at 50% 20%, rgba(96, 165, 250, 0.18), transparent 32%);
+        pointer-events: none;
+        z-index: 1;
       }
 
       .chair-img {
         width: 100%;
         height: 100%;
-        object-fit: contain;
+        object-fit: cover;
         object-position: center;
-        filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.4));
+        display: block;
       }
 
-      /* 交互部位按钮 */
-      .body-part {
+      .chair-marker {
         position: absolute;
-        width: 70px;
-        height: 70px;
+        z-index: 2;
+        width: 60px;
+        height: 60px;
         border-radius: 50%;
-        cursor: pointer;
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        font-size: 12px;
-        font-weight: 700;
-        transition: all 0.25s ease;
-        border: 3px solid rgba(99, 102, 241, 0.5);
-        background: rgba(99, 102, 241, 0.15);
-        z-index: 10;
-        text-align: center;
-        padding: 4px;
-        box-shadow: 0 0 15px rgba(99, 102, 241, 0.3), inset 0 0 10px rgba(99, 102, 241, 0.1);
-        flex-direction: column;
         gap: 2px;
+        text-align: center;
+        cursor: pointer;
+        color: #e0e7ff;
+        background: rgba(59, 130, 246, 0.13);
+        border: 1px solid rgba(125, 211, 252, 0.38);
+        box-shadow: 0 0 18px rgba(59, 130, 246, 0.22), inset 0 0 14px rgba(59, 130, 246, 0.1);
+        transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+        animation: breatheGlow 3.4s ease-in-out infinite;
       }
 
-      .body-part::before {
-        content: '';
-        position: absolute;
-        inset: -8px;
-        border-radius: 50%;
-        border: 2px solid rgba(99, 102, 241, 0.2);
-        pointer-events: none;
+      .chair-marker:hover {
+        transform: scale(1.08);
+        box-shadow: 0 0 28px rgba(59, 130, 246, 0.4), inset 0 0 18px rgba(59, 130, 246, 0.16);
       }
 
-      .body-part:hover {
-        background: rgba(99, 102, 241, 0.28);
-        border-color: rgba(99, 102, 241, 1);
-        box-shadow: 0 0 35px rgba(99, 102, 241, 0.8), inset 0 0 15px rgba(99, 102, 241, 0.2);
-        transform: scale(1.15);
+      .chair-marker.active {
+        background: rgba(59, 130, 246, 0.3);
+        border-color: rgba(191, 219, 254, 0.9);
+        box-shadow: 0 0 34px rgba(59, 130, 246, 0.7), inset 0 0 18px rgba(59, 130, 246, 0.2);
       }
 
-      .body-part.active {
-        background: rgba(99, 102, 241, 0.5);
-        border-color: rgba(129, 140, 248, 1);
-        box-shadow: 0 0 50px rgba(99, 102, 241, 1), inset 0 0 20px rgba(99, 102, 241, 0.4);
-        animation: pulse 0.5s ease-out;
-      }
-
-      @keyframes pulse {
-        0% {
-          transform: scale(1.25);
-          opacity: 1;
-        }
+      @keyframes breatheGlow {
+        0%,
         100% {
-          transform: scale(1);
-          opacity: 1;
+          filter: brightness(1);
+        }
+        50% {
+          filter: brightness(1.15);
         }
       }
 
-      /* 部位定位 - 适配扩大的按钮尺寸 */
+      .chair-marker__icon {
+        font-size: 13px;
+        line-height: 1;
+      }
+
+      .chair-marker__label {
+        font-size: 10px;
+        font-weight: 700;
+      }
+
       .part-legs {
-        bottom: 42%;
         left: 68%;
+        bottom: calc(26% + 20px);
       }
 
       .part-arms {
-        top: 36%;
-        right: 220px;
+        left: 58%;
+        top: calc(35% - 20px);
       }
 
       .part-neck {
-        top: 26%;
-        right: 310px;
+        left: 48%;
+        top: calc(19% - 20px);
       }
 
-      /* 文字说明 */
-      .mi-description {
-        background: rgba(16, 18, 24, 0.6);
-        border: 1px solid rgba(99, 102, 241, 0.3);
-        border-radius: 12px;
-        padding: 12px;
-        font-size: 12px;
-        line-height: 1.8;
-        opacity: 0.85;
-        max-width: 550px;
+      .eeg-card {
+        padding: 14px;
       }
 
-      .mi-description h3 {
-        margin: 0 0 4px;
-        font-size: 13px;
-        color: #c7d2fe;
-        font-weight: 600;
-      }
-
-      .mi-description p {
-        margin: 0 0 4px;
-      }
-
-      .mi-description p:last-child {
-        margin-bottom: 0;
-      }
-
-      .mi-highlight {
-        color: #a5b4fc;
-        font-weight: 500;
-      }
-
-      /* 右侧：脑电波形和反馈 */
-      .mi-right {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-      }
-
-      .eeg-panel {
-        border: 1px solid rgba(99, 102, 241, 0.3);
-        border-radius: 16px;
-        background: linear-gradient(135deg, rgba(16, 18, 24, 0.95) 0%, rgba(30, 27, 75, 0.6) 100%);
-        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), 0 0 40px rgba(99, 102, 241, 0.1);
-        padding: 16px;
-        position: relative;
-        overflow: hidden;
-      }
-
-      .eeg-panel::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 2px;
-        background: linear-gradient(90deg, 
-          transparent 0%, 
-          rgba(99, 102, 241, 0.6) 50%, 
-          transparent 100%);
-        animation: scanTop 3s ease-in-out infinite;
-      }
-
-      @keyframes scanTop {
-        0%, 100% { opacity: 0.3; }
-        50% { opacity: 1; }
-      }
-
-      .eeg-header {
+      .eeg-card__head {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 8px;
+        gap: 12px;
         margin-bottom: 10px;
-        font-weight: 600;
+      }
+
+      .eeg-card__title {
+        margin: 0;
+        font-size: 16px;
+        font-weight: 700;
+      }
+
+      .eeg-state {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 7px 12px;
+        border-radius: 999px;
+        font-size: 12px;
+        color: #bbf7d0;
+        background: rgba(22, 163, 74, 0.12);
+        border: 1px solid rgba(34, 197, 94, 0.25);
+        white-space: nowrap;
+      }
+
+      .eeg-state__dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #22c55e;
+        box-shadow: 0 0 12px rgba(34, 197, 94, 0.9);
+        animation: blink 1.8s ease-in-out infinite;
+      }
+
+      .eeg-canvas-wrap {
         position: relative;
-        z-index: 1;
-      }
-
-      .eeg-header span:first-child {
-        color: #e0e7ff;
-        text-shadow: 0 0 10px rgba(99, 102, 241, 0.5);
-      }
-
-      .eeg-status {
-        font-weight: 500;
-        padding: 4px 12px;
-        border-radius: 12px;
-        background: rgba(99, 102, 241, 0.15);
-        border: 1px solid rgba(99, 102, 241, 0.3);
-        color: #c7d2fe;
-        font-size: 11px;
-        transition: all 0.3s ease;
+        border-radius: 14px;
+        overflow: hidden;
+        border: 1px solid rgba(96, 165, 250, 0.18);
+        background:
+          linear-gradient(rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+          linear-gradient(180deg, rgba(15, 23, 42, 0.82), rgba(2, 6, 23, 0.96));
+        background-size: 28px 28px, 28px 28px, auto;
+        box-shadow: inset 0 0 28px rgba(0, 0, 0, 0.55), 0 0 18px rgba(56, 189, 248, 0.08);
       }
 
       .eeg-canvas {
         width: 100%;
-        height: 200px;
+        height: 210px;
         display: block;
-        border-radius: 8px;
-        background: linear-gradient(180deg, rgba(15, 23, 42, 0.8) 0%, rgba(2, 6, 23, 0.95) 50%, rgba(15, 23, 42, 0.8) 100%);
-        border: 1px solid rgba(99, 102, 241, 0.2);
-        outline: none;
-        box-shadow: 
-          inset 0 0 30px rgba(0, 0, 0, 0.6),
-          inset 0 0 60px rgba(99, 102, 241, 0.05),
-          0 4px 20px rgba(0, 0, 0, 0.3);
-        position: relative;
       }
 
       .eeg-hint {
         margin-top: 8px;
-        font-size: 10px;
-        opacity: 0.6;
-        color: #a5b4fc;
-        display: flex;
-        align-items: center;
-        gap: 6px;
+        font-size: 12px;
+        opacity: 0.75;
+        color: #c7d2fe;
       }
 
-      .eeg-hint::before {
-        content: '●';
-        color: rgba(99, 102, 241, 0.6);
-        font-size: 8px;
-        animation: blink 2s ease-in-out infinite;
-      }
-
-      @keyframes blink {
-        0%, 100% { opacity: 0.4; }
-        50% { opacity: 1; }
-      }
-
-      /* 状态反馈 */
-      .feedback-panel {
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 12px;
-        background: rgba(16, 18, 24, 0.6);
+      .status-card,
+      .future-card {
         padding: 14px;
       }
 
-      .feedback-title {
-        font-size: 12px;
+      .status-list {
+        display: grid;
+        gap: 10px;
+      }
+
+      .status-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        min-height: 44px;
+        padding: 0 10px;
+        border-radius: 12px;
+        background: rgba(8, 14, 28, 0.72);
+        border: 1px solid rgba(125, 211, 252, 0.14);
+      }
+
+      .status-row__left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .status-row__icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 8px;
+        display: grid;
+        place-items: center;
+        background: rgba(59, 130, 246, 0.12);
+        color: #bfdbfe;
+        flex-shrink: 0;
+      }
+
+      .status-row__name {
+        font-size: 13px;
         font-weight: 600;
-        opacity: 0.8;
-        margin-bottom: 8px;
+        white-space: nowrap;
+      }
+
+      .status-row__value {
+        font-size: 11px;
+        opacity: 0.72;
+        white-space: nowrap;
       }
 
       .feedback-item {
         display: flex;
         align-items: center;
         justify-content: space-between;
+        gap: 12px;
         font-size: 12px;
-        padding: 8px;
-        background: rgba(99, 102, 241, 0.04);
-        border-radius: 6px;
-        margin-bottom: 6px;
-      }
-
-      .feedback-item:last-child {
+        padding: 8px 0;
+        background: transparent;
+        border-radius: 0;
         margin-bottom: 0;
-      }
-
-      .feedback-label {
-        opacity: 0.7;
       }
 
       .feedback-value {
@@ -296,12 +362,51 @@
         font-weight: 600;
       }
 
-      .feedback-item.active {
-        background: rgba(99, 102, 241, 0.15);
-        border-left: 2px solid rgba(99, 102, 241, 0.8);
+      .future-card__text {
+        font-size: 13px;
+        line-height: 1.6;
+        opacity: 0.88;
       }
 
-      /* 按钮组 */
+      .feature-row {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 12px;
+      }
+
+      .feature-card {
+        padding: 12px 14px;
+        border-radius: 16px;
+        background: rgba(20, 30, 50, 0.6);
+        border: 1px solid rgba(96, 165, 250, 0.22);
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+      }
+
+      .feature-card__icon {
+        width: 32px;
+        height: 32px;
+        display: grid;
+        place-items: center;
+        border-radius: 12px;
+        background: linear-gradient(145deg, rgba(56, 189, 248, 0.16), rgba(99, 102, 241, 0.12));
+        margin-bottom: 8px;
+        font-size: 16px;
+      }
+
+      .feature-card__title {
+        margin: 0 0 4px;
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .feature-card__desc {
+        margin: 0;
+        font-size: 11px;
+        line-height: 1.5;
+        opacity: 0.72;
+      }
+
       .button-group {
         display: flex;
         gap: 8px;
@@ -330,7 +435,6 @@
         transform: scale(0.95);
       }
 
-      /* 信息卡片 */
       .info-card {
         background: rgba(16, 18, 24, 0.6);
         border: 1px solid rgba(99, 102, 241, 0.3);
@@ -347,22 +451,45 @@
         margin-bottom: 6px;
       }
 
-      @media (max-width: 1100px) {
-        .part-arms,
-        .part-neck {
-          right: auto;
-          left: -50px;
+      @keyframes blink {
+        0%, 100% { opacity: 0.45; }
+        50% { opacity: 1; }
+      }
+
+      @media (max-width: 1240px) {
+        .mi-layout {
+          grid-template-columns: 1fr;
         }
 
-        .chair-container {
-          max-width: 405px;
-          height: 459px;
+        .feature-row {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (max-width: 760px) {
+        .mi-page {
+          padding: 10px;
         }
 
-        .body-part {
-          width: 39px;
-          height: 39px;
-          font-size: 8px;
+        .panel-title {
+          font-size: 18px;
+        }
+
+        .feature-row {
+          grid-template-columns: 1fr;
+        }
+
+        .chair-stage {
+          height: 260px;
+        }
+
+        .chair-marker {
+          width: 54px;
+          height: 54px;
+        }
+
+        .eeg-canvas {
+          height: 190px;
         }
       }
     </style>
@@ -382,70 +509,126 @@
       </div>
     </header>
 
-    <main class="mi-layout">
-      <!-- 左侧：按摩椅和交互部位 -->
-      <div class="mi-left">
-        <!-- 功能说明 -->
-        <div class="mi-description">
-          <h3>🧠 运动想象控制原理</h3>
-          <p>
-            <span class="mi-highlight">运动想象 (Motor Imagery)</span> 是一种仅凭想象就能进行肢体运动的技术。无需实际动作，只需在脑中清晰地想象某个身体部位的运动。
-          </p>
-          <p>
-            当你<span class="mi-highlight">想象大腿、手臂或肩颈在运动</span>时，我们的系统会通过脑电波检测到这种想象过程，并实时驱动按摩椅的对应部位进行按摩。
-          </p>
-          <p>
-            这实现了真正的<span class="mi-highlight">无感化家居交互</span>——无需语音、无需动作、无需接触，仅通过大脑意念即可享受智能按摩体验。
-          </p>
+    <main class="mi-page">
+      <section class="mi-layout">
+        <div class="mi-main">
+          <article class="panel-card principle-card">
+            <div class="panel-card__head">
+              <h2 class="panel-title">
+                <span class="principle-card__icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M12 2a7 7 0 0 0-4 12.8V17a2 2 0 0 0 2 2h1v2h2v-2h1a2 2 0 0 0 2-2v-2.2A7 7 0 0 0 12 2Zm-1 5h2v2h-2V7Zm0 4h2v4h-2v-4Z" />
+                  </svg>
+                </span>
+                运动想象控制原理
+              </h2>
+              <span class="section-chip">Motor Imagery · BCI</span>
+            </div>
+            <div class="principle-card__body">
+              <p>
+                <span class="mi-highlight">运动想象 (Motor Imagery)</span> 是一种仅凭想象就能进行肢体运动的技术。无需实际动作，只需在脑中清晰地想象某个身体部位的运动。
+              </p>
+              <p>
+                当你<span class="mi-highlight">想象大腿、手臂或肩颈在运动</span>时，我们的系统会通过脑电波检测到这种想象过程，并实时驱动按摩椅的对应部位进行按摩。
+              </p>
+              <p>
+                这实现了真正的<span class="mi-highlight">无感化家居交互</span>，无需语音、无需动作、无需接触，仅通过大脑意念即可享受智能按摩体验。
+              </p>
+            </div>
+          </article>
+
+          <article class="panel-card chair-card">
+            <div class="panel-card__head">
+              <h2 class="panel-title">智能按摩椅全景展示</h2>
+              <span class="section-chip">Competition Demo</span>
+            </div>
+
+            <div class="chair-stage">
+              <img src="../assets/pages/chair.png" alt="智能按摩椅全景展示" class="chair-img" />
+
+              <div class="chair-marker body-part part-neck" data-part="neck">
+                <span class="chair-marker__icon">🧠</span>
+                <span class="chair-marker__label">肩颈</span>
+              </div>
+              <div class="chair-marker body-part part-arms" data-part="arms">
+                <span class="chair-marker__icon">✋</span>
+                <span class="chair-marker__label">手臂</span>
+              </div>
+              <div class="chair-marker body-part part-legs" data-part="legs">
+                <span class="chair-marker__icon">🦵</span>
+                <span class="chair-marker__label">大腿</span>
+              </div>
+            </div>
+          </article>
         </div>
 
-        <div class="chair-container">
-          <img src="../assets/pages/chair.png" alt="按摩椅" class="chair-img" />
-          
-          <!-- 交互按钮 -->
-          <div class="body-part part-legs" data-part="legs">大腿按摩</div>
-          <div class="body-part part-arms" data-part="arms">手臂按摩</div>
-          <div class="body-part part-neck" data-part="neck">肩颈按摩</div>
-        </div>
-      </div>
+        <aside class="mi-right">
+          <article class="panel-card eeg-card">
+            <div class="eeg-card__head">
+              <h2 class="eeg-card__title">脑电波形实时监测（EEG）</h2>
+              <span class="eeg-state" id="eegStatus"><span class="eeg-state__dot"></span><span id="eegStatusText">信号良好</span></span>
+            </div>
+            <div class="eeg-canvas-wrap">
+              <canvas id="eegCanvas" class="eeg-canvas"></canvas>
+            </div>
+            <div class="eeg-hint">脑电波形实时显示，单部位互斥触发，每次按摩 3 秒。</div>
+          </article>
 
-      <!-- 右侧：脑电波形和反馈 -->
-      <div class="mi-right">
-        <!-- 脑电波形显示 -->
-        <div class="eeg-panel">
-          <div class="eeg-header">
-            <span>脑电波形实时监测 (EEG)</span>
-            <span class="eeg-status" id="eegStatus">待命中</span>
-          </div>
-          <canvas id="eegCanvas" class="eeg-canvas"></canvas>
-          <div class="eeg-hint">
-            脑电波形实时显示（单部位互斥触发，每次按摩 3 秒）
-          </div>
-        </div>
+          <article class="panel-card status-card">
+            <div class="panel-card__head">
+              <h2 class="panel-title" style="font-size: 16px;">按摩状态监测</h2>
+              <span class="section-chip">Live State</span>
+            </div>
+            <div class="status-list">
+              <div class="status-row feedback-item" id="statusLegs">
+                <div class="status-row__left">
+                  <div class="status-row__icon">🦵</div>
+                  <div class="status-row__name feedback-label">大腿按摩</div>
+                </div>
+                <div class="status-row__value feedback-value">待机</div>
+              </div>
+              <div class="status-row feedback-item" id="statusArms">
+                <div class="status-row__left">
+                  <div class="status-row__icon">💪</div>
+                  <div class="status-row__name feedback-label">手臂按摩</div>
+                </div>
+                <div class="status-row__value feedback-value">待机</div>
+              </div>
+              <div class="status-row feedback-item" id="statusNeck">
+                <div class="status-row__left">
+                  <div class="status-row__icon">🧘</div>
+                  <div class="status-row__name feedback-label">肩颈按摩</div>
+                </div>
+                <div class="status-row__value feedback-value">待机</div>
+              </div>
+            </div>
+          </article>
 
-        <!-- 按摩状态反馈 -->
-        <div class="feedback-panel">
-          <div class="feedback-title">按摩状态监测</div>
-          <div class="feedback-item" id="statusLegs">
-            <span class="feedback-label">大腿按摩</span>
-            <span class="feedback-value">待机</span>
-          </div>
-          <div class="feedback-item" id="statusArms">
-            <span class="feedback-label">手臂按摩</span>
-            <span class="feedback-value">待机</span>
-          </div>
-          <div class="feedback-item" id="statusNeck">
-            <span class="feedback-label">肩颈按摩</span>
-            <span class="feedback-value">待机</span>
-          </div>
-        </div>
+        </aside>
 
-        <!-- 信息提示 -->
-        <div class="info-card">
-          <strong>✨ 无感化智能家居的未来</strong>
-          通过脑机接口技术，用户可以仅凭意念控制家居设备。在这个演示中，想象身体不同部位的运动会自动触发对应的按摩功能，实现完全的手势和语音自由——这是真正的人机融合时代的开始。
-        </div>
-      </div>
+        <section class="feature-row">
+          <article class="feature-card">
+            <div class="feature-card__icon">🫥</div>
+            <h3 class="feature-card__title">无感化交互</h3>
+            <p class="feature-card__desc">无需语音、无需触控，通过脑电意念完成控制。</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-card__icon">🎯</div>
+            <h3 class="feature-card__title">精准识别</h3>
+            <p class="feature-card__desc">以想象部位为触发目标，匹配对应按摩区域。</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-card__icon">⚡</div>
+            <h3 class="feature-card__title">实时响应</h3>
+            <p class="feature-card__desc">脑电变化与按摩反馈同步，演示过程更具临场感。</p>
+          </article>
+          <article class="feature-card">
+            <div class="feature-card__icon">🏠</div>
+            <h3 class="feature-card__title">智能家居融合</h3>
+            <p class="feature-card__desc">面向竞赛展示的 BCI + 智能家居整合方案。</p>
+          </article>
+        </section>
+      </section>
     </main>
 
     <footer class="footer">

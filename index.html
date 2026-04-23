@@ -5,6 +5,35 @@
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>脑机接口家居控制 · 总页面</title>
     <link rel="stylesheet" href="./assets/css/styles.css" />
+
+    <script>
+      // 自动全屏功能 - 尽早执行以快速响应
+      function enterFullscreen() {
+        const elem = document.documentElement;
+        if (elem.requestFullscreen) {
+          elem.requestFullscreen().catch(err => console.log('全屏请求失败:', err));
+        } else if (elem.webkitRequestFullscreen) {
+          elem.webkitRequestFullscreen();
+        } else if (elem.mozRequestFullScreen) {
+          elem.mozRequestFullScreen();
+        } else if (elem.msRequestFullscreen) {
+          elem.msRequestFullscreen();
+        }
+      }
+
+      // 页面加载完成后进入全屏
+      document.addEventListener('DOMContentLoaded', enterFullscreen);
+      
+      // 如果 DOMContentLoaded 已经触发，立即执行
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', enterFullscreen);
+      } else {
+        enterFullscreen();
+      }
+
+      // 备选方案：如果上面的方式无效，在用户首次点击时也尝试全屏
+      document.addEventListener('click', enterFullscreen, { once: true });
+    </script>
   </head>
   <body class="landing-page">
     <header class="topbar">

@@ -1,5 +1,6 @@
 (() => {
   const { createApp } = Vue;
+  const INITIAL_EMOTION = Math.random() < 0.5 ? 'calm' : 'low';
 
   const CHANNEL_NAMES = [
     'Fp1', 'Fp2', 'F7', 'F3', 'Fz', 'F4', 'F8',
@@ -22,22 +23,18 @@
       hr: { min: 50, max: 110, initial: 78, normalLow: 60, normalHigh: 100 }
     },
     environment: {
-      stateMap: {
-        calm: '清醒',
-        neutral: '清醒',
-        anxious: '疲劳',
-        stressed: '疲劳'
-      },
       presets: {
-        清醒: {
-          light: { from: 80, to: 100 },
-          temp: { from: 26, to: 24 },
-          message: '环境已优化：提升专注力'
+        calm: {
+          light: { from: 40, to: 80 },
+          colorTemp: { from: 4500, to: 6500 },
+          temp: { from: 27, to: 24 },
+          message: '环境已调整：提升舒适度与清醒感'
         },
-        疲劳: {
+        low: {
           light: { from: 80, to: 40 },
+          colorTemp: { from: 6500, to: 4500 },
           temp: { from: 24, to: 27 },
-          message: '环境已调整：进入放松模式'
+          message: '环境已调整：进入舒缓模式'
         }
       },
       transitionMs: 780
@@ -46,10 +43,10 @@
 
   const EMOTION_STATES = {
     calm: {
-      name: '放松 / 平静',
+      name: '平静情绪',
       class: 'emotion-calm',
       emoji: '😌',
-      description: '状态稳定，建议保持当前任务节奏。',
+      description: '状态平稳，建议维持当前节奏并保持专注。',
       medical: {
         title: '医学说明',
         description: '在放松或冥想状态下，脑电表现出如下特征：',
@@ -61,53 +58,19 @@
         ]
       }
     },
-    neutral: {
-      name: '中性 / 清醒',
-      class: 'emotion-neutral',
-      emoji: '😐',
-      description: '认知负荷正常，注意力处于可用水平。',
+    low: {
+      name: '低落情绪',
+      class: 'emotion-low',
+      emoji: '😞',
+      description: '情绪偏低，系统建议优先进行舒缓联动。',
       medical: {
         title: '医学说明',
-        description: '在清醒、专注的正常状态下，脑电特征为：',
+        description: '在低落或疲惫情绪下，脑电特征常见为：',
         points: [
-          'Beta 波 (13-30Hz) 占优，表示认知活动活跃',
-          'Alpha 波相对降低，反映注意力集中',
-          '前额叶和中央区域的 Beta 活动增加',
-          '脑电活动频率相对较快，振幅适中'
-        ]
-      }
-    },
-    anxious: {
-      name: '焦虑 / 紧张',
-      class: 'emotion-anxious',
-      emoji: '😰',
-      description: '系统检测到较高警觉，建议短时休息。',
-      medical: {
-        title: '医学说明',
-        description: '在焦虑或紧张状态下，脑电出现以下特征：',
-        points: [
-          'Beta 波（特别是高 Beta 13-30Hz）显著增强',
-          'Alpha 波减弱，反映警惕性升高',
-          '前额叶皮层激活度明显增加',
-          '脑电波形不规则，振幅易波动',
-          '可能出现肌肉紧张伪迹 (EMG artifact)'
-        ]
-      }
-    },
-    stressed: {
-      name: '压力 / 疲劳',
-      class: 'emotion-stressed',
-      emoji: '😩',
-      description: '出现疲劳趋势，系统建议切换放松模式。',
-      medical: {
-        title: '医学说明',
-        description: '在高压力或疲劳状态下，脑电表现：',
-        points: [
-          'Theta 波 (4-8Hz) 显著增强，特别是在颞叶和中线区域',
-          'Alpha 波减弱或消失',
-          '脑电整体振幅下降，节律性变差',
-          '可能出现 Delta 波 (1-4Hz) 的异常增加',
-          '反映认知资源耗尽和疲劳程度'
+          'Alpha 波下降，整体唤醒度和积极性降低',
+          'Theta 波相对抬升，提示疲劳或情绪低落',
+          '脑电节律变慢，波形更平缓',
+          '系统通常优先采用柔和环境刺激进行调节'
         ]
       }
     }
@@ -123,10 +86,11 @@
   }
 
   function getEnvironmentStrategy(state, config = APP_CONFIG.environment) {
-    const preset = config.presets[state] || config.presets['清醒'];
+    const preset = config.presets[state] || config.presets.calm;
     return {
       state,
       light: { ...preset.light },
+      colorTemp: { ...preset.colorTemp },
       temp: { ...preset.temp },
       message: preset.message
     };
@@ -172,7 +136,7 @@
         </svg>
         <div class="vital-ring-center">
           <div class="vital-ring-center-number">{{ normalizedPercent }}%</div>
-          <div class="vital-ring-center-unit">进度</div>
+          <div class="vital-ring-center-unit">含量</div>
         </div>
       </div>
     `
@@ -278,6 +242,10 @@
                 <div class="env-value">{{ view.lightFrom }}% → {{ view.lightTo }}%</div>
               </div>
               <div class="env-row">
+                <div>🌡️ 色温</div>
+                <div class="env-value">{{ view.colorTempFrom }}K → {{ view.colorTempTo }}K</div>
+              </div>
+              <div class="env-row">
                 <div>❄️ 空调温度</div>
                 <div class="env-value">{{ view.tempFrom }}℃ → {{ view.tempTo }}℃</div>
               </div>
@@ -292,7 +260,7 @@
         channelNames: CHANNEL_NAMES,
         running: false,
         statusText: '准备就绪',
-        currentEmotion: 'neutral',
+        currentEmotion: INITIAL_EMOTION,
         bandPowers: { alpha: 20, beta: 15, theta: 10, delta: 5 },
         vitals: {
           spo2: APP_CONFIG.vitals.spo2.initial,
@@ -302,13 +270,15 @@
           spo2: { label: '正常', class: 'vital-badge-ok' },
           hr: { label: '正常', class: 'vital-badge-ok' }
         },
-        environmentStrategy: getEnvironmentStrategy('清醒'),
+        environmentStrategy: getEnvironmentStrategy(INITIAL_EMOTION),
         environmentView: {
           lightFrom: 80,
-          lightTo: 100,
-          tempFrom: 26,
-          tempTo: 24,
-          message: '环境已优化：提升专注力'
+          lightTo: 40,
+          colorTempFrom: 6500,
+          colorTempTo: 4500,
+          tempFrom: 24,
+          tempTo: 27,
+          message: '环境已调整：进入舒缓模式'
         },
         environmentAnimating: false,
         eegState: {
@@ -328,7 +298,7 @@
     },
     computed: {
       currentEmotionData() {
-        return EMOTION_STATES[this.currentEmotion] || EMOTION_STATES.neutral;
+        return EMOTION_STATES[this.currentEmotion] || EMOTION_STATES.calm;
       }
     },
     methods: {
@@ -430,19 +400,7 @@
         return { label: '偏快', class: 'vital-badge-warn' };
       },
       classifyEmotion() {
-        const { alpha, beta, theta, delta } = this.bandPowers;
-        const calmScore = alpha * 2.0 - beta * 0.4 + 8;
-        const anxiousScore = beta * 2.2 - alpha * 0.8 - theta * 0.4 - 5;
-        const stressedScore = theta * 1.9 + delta * 0.9 - alpha * 0.7 - 5;
-
-        let emotion = 'neutral';
-        if (calmScore > 18 && calmScore > anxiousScore + 3 && calmScore > stressedScore + 3) {
-          emotion = 'calm';
-        } else if (anxiousScore > 25 && anxiousScore > stressedScore + 2) {
-          emotion = 'anxious';
-        } else if (stressedScore > 20) {
-          emotion = 'stressed';
-        }
+        const emotion = Math.random() < 0.5 ? 'calm' : 'low';
 
         if (emotion !== this.currentEmotion) {
           this.currentEmotion = emotion;
@@ -450,8 +408,7 @@
         }
       },
       applyEnvironmentByEmotion(emotion) {
-        const mappedState = APP_CONFIG.environment.stateMap[emotion] || '清醒';
-        const strategy = getEnvironmentStrategy(mappedState, APP_CONFIG.environment);
+        const strategy = getEnvironmentStrategy(emotion, APP_CONFIG.environment);
         this.environmentStrategy = strategy;
         this.animateEnvironment(strategy);
       },
@@ -461,12 +418,16 @@
         const from = {
           lightFrom: this.environmentView.lightFrom,
           lightTo: this.environmentView.lightTo,
+          colorTempFrom: this.environmentView.colorTempFrom,
+          colorTempTo: this.environmentView.colorTempTo,
           tempFrom: this.environmentView.tempFrom,
           tempTo: this.environmentView.tempTo
         };
         const to = {
           lightFrom: strategy.light.from,
           lightTo: strategy.light.to,
+          colorTempFrom: strategy.colorTemp.from,
+          colorTempTo: strategy.colorTemp.to,
           tempFrom: strategy.temp.from,
           tempTo: strategy.temp.to
         };
@@ -478,6 +439,8 @@
           const progress = clamp((now - start) / duration, 0, 1);
           this.environmentView.lightFrom = Math.round(from.lightFrom + (to.lightFrom - from.lightFrom) * progress);
           this.environmentView.lightTo = Math.round(from.lightTo + (to.lightTo - from.lightTo) * progress);
+          this.environmentView.colorTempFrom = Math.round(from.colorTempFrom + (to.colorTempFrom - from.colorTempFrom) * progress);
+          this.environmentView.colorTempTo = Math.round(from.colorTempTo + (to.colorTempTo - from.colorTempTo) * progress);
           this.environmentView.tempFrom = Math.round(from.tempFrom + (to.tempFrom - from.tempFrom) * progress);
           this.environmentView.tempTo = Math.round(from.tempTo + (to.tempTo - from.tempTo) * progress);
 
@@ -498,10 +461,8 @@
         if (!this.running) return;
 
         const profileMap = {
-          calm: { alpha: 25, beta: 12, theta: 10, delta: 5 },
-          neutral: { alpha: 15, beta: 20, theta: 8, delta: 5 },
-          anxious: { alpha: 8, beta: 28, theta: 12, delta: 6 },
-          stressed: { alpha: 5, beta: 15, theta: 25, delta: 10 }
+          calm: { alpha: 26, beta: 11, theta: 9, delta: 4 },
+          low: { alpha: 9, beta: 14, theta: 22, delta: 9 }
         };
 
         const interval = 1000 / this.eegState.sampleRate;
